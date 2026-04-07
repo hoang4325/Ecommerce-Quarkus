@@ -1,135 +1,122 @@
-# E-Commerce Microservices Platform
+# 🚀 E-Commerce Event-Driven Microservices
 
-Hệ thống thương mại điện tử theo kiến trúc microservice, xây dựng bằng **Quarkus 3.17.x + Java 17 + PostgreSQL**.
+![Java](https://img.shields.io/badge/Java-17-blue.svg) ![Quarkus](https://img.shields.io/badge/Quarkus-3.x-blueviolet.svg) ![Kafka](https://img.shields.io/badge/Apache_Kafka-Event--Driven-black.svg?logo=apachekafka) ![Keycloak](https://img.shields.io/badge/Keycloak-OIDC-cyan.svg) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg?logo=postgresql)
+
+A highly scalable, reactive, and event-driven E-Commerce platform built purely on **Java 17** and **Quarkus**. It implements the **Saga Pattern** for distributed transactions, utilizing **Apache Kafka** for asynchronous inter-service communication and **Keycloak** for robust centralized IAM (Identity and Access Management).
 
 ---
 
-## Kiến trúc Phase 1
+## 🏛️ System Architecture
 
+The ecosystem relies on an API Gateway to handle incoming traffic and enforce JWT validation. Sub-services act independently with their own bounded contexts (Databases) and coordinate complex business transactions (like Checkouts) completely asynchronously.
+
+```mermaid
+graph TD
+    Client[Client / Frontend] -->|REST HTTP| Gateway[API Gateway :8081]
+    
+    Gateway --> Auth[Auth Service :8082]
+    Gateway --> User[User Service :8090]
+    Gateway --> Product[Product Service :8083]
+    Gateway --> Cart[Cart Service :8084]
+    Gateway --> Order[Order Service :8085]
+
+    subgraph Messaging Infrastructure [Apache Kafka via KRaft]
+        Kafka((Kafka Broker))
+    end
+
+    Order -->|Event: order-created| Kafka
+    Kafka -->|Consumed by| Inventory[Inventory Service :8087]
+    Inventory -->|Event: stock-reserved| Kafka
+    Kafka -->|Consumed by| Payment[Payment Service :8088]
+    Payment -->|Event: payment-processed| Kafka
+    Kafka -->|Consumed by| Order
+    
+    Order -->|Event: order-confirmed/cancelled| Kafka
+    Kafka -->|Consumed by| Notification[Notification Service :8089]
+    
+    Auth -.->|OIDC| Keycloak[Keycloak IAM :8080]
 ```
-Client (Postman) ──► product-service (:8083)
-                 ──► cart-service    (:8084)
-                 ──► order-service   (:8085)
-                        │
-                        ├── gọi cart-service (lấy cart items)
-                        └── gọi product-service (validate products)
-```
-
-**Infra**: 1 PostgreSQL container với 3 databases (`product_db`, `cart_db`, `order_db`)
 
 ---
 
-## Yêu cầu
+## 🧩 Microservices Breakdown
 
-- Java 17
-- Maven 3.9+
-- Docker Desktop (for PostgreSQL)
+| Service | Port | Description |
+|---|---|---|
+| **API Gateway** | `8081` | Serves as the single entry point. Enforces OIDC/JWT restrictions globally. |
+| **Auth Service** | `8082` | Proxies user login requests directly to Keycloak to issue Session Tokens. |
+| **Product Service** | `8083` | Manages global categories and product catalog listing. |
+| **Cart Service** | `8084` | Temporary state storage for user shopping session. |
+| **Order Service** | `8085` | Initiates the distributed Saga flow and handles JTA transaction isolation. |
+| **User Service** | `8090` | Manages detailed User Profiles extracted and enriched from Keycloak claims. |
+| **Inventory Service** | `8087` | Hard stock limits via pessimistic distributed locking and event handling. |
+| **Payment Service** | `8088` | Evaluates and tracks payment approvals in the background asynchronously. |
+| **Notification Service** | `8089` | Real-time tracking of saga stages and user alerts. |
 
 ---
 
-## Cách chạy local
+## 🛠️ Technology Stack
 
-### Bước 1 — Khởi động database
+- **Framework**: Quarkus (Reactive + Hibernate ORM Panache)
+- **Database**: PostgreSQL (auto-migrated via Flyway)
+- **Messaging Broker**: Apache Kafka (running in ZooKeeper-less KRaft mode)
+- **Security**: Keycloak (OIDC JWT Bearer propagation across internal REST paths)
+- **Transmutations**: MapStruct (DTO Mapping)
+- **Tooling**: Maven, PowerShell Automation
 
-```bash
+---
+
+## 🚀 Getting Started
+
+### 1. Prerequisites
+- **Java 17+**
+- **Apache Maven 3.8+**
+- **Docker & Docker Compose** (for backing infrastructure)
+
+### 2. Bootstrapping the Infrastructure
+Bring up PostgreSQL, Kafka, and the pre-configured Keycloak instances:
+```powershell
 docker-compose up -d
 ```
 
-Kiểm tra: `docker-compose ps` → PostgreSQL phải ở trạng thái `healthy`
+### 3. Launching Microservices
+You can start all 8 microservices smoothly under Quarkus Dev mode via the built-in PowerShell script. The script compiles the core parent libraries and boots isolated Terminal windows automatically.
+```powershell
+.\run-all-services.ps1
+```
 
-### Bước 2 — Compile toàn bộ project
+---
 
+## 🧪 Automated Testing
+
+We enforce test-driven infrastructure logic using modular PowerShell API wrappers. Wait until all services are booted up before launching tests.
+
+### Run Happy-Path Saga Testing
+Executes E2E Order generation, simulating user Auth, Catalog browsing, Cart locking, and Kafka-Saga validations:
+```powershell
+.\test-all-apis.ps1
+```
+### Run Comprehensive Microservice Suite
+Riot testing across **ALL** 8 microservices, calling CRUD endpoints sequentially to evaluate structural bindings:
+```powershell
+.\test-comprehensive.ps1
+```
+
+---
+
+## 📜 Conventional Commits Workflow
+
+This project enforces strict Git Versioning strategies utilizing [Conventional Commits](https://www.conventionalcommits.org/).
+
+**Type List:**
+- `feature`: A new feature
+- `bugfix`: A bug fix
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `chore`: Modifying configuration, dependencies or workflow scripts
+- `docs`: Documentation only changes
+- `style`: Changes that do not affect the meaning of the code (white-space, formatting, etc)
+
+**Example:**
 ```bash
-mvn clean install -DskipTests
-```
-
-### Bước 3 — Chạy từng service (mỗi service 1 terminal)
-
-```bash
-# Terminal 1
-cd product-service
-mvn quarkus:dev
-
-# Terminal 2
-cd cart-service
-mvn quarkus:dev
-
-# Terminal 3
-cd order-service
-mvn quarkus:dev
-```
-
-### Bước 4 — Lấy JWT token để test
-
-```bash
-# Lấy token USER
-cd common-lib
-mvn exec:java -Dexec.mainClass="com.ecommerce.common.security.JwtTokenUtil" -Dexec.args="USER"
-
-# Lấy token ADMIN
-mvn exec:java -Dexec.mainClass="com.ecommerce.common.security.JwtTokenUtil" -Dexec.args="ADMIN"
-```
-
-Token hết hạn sau 24 giờ. Đây là **dev mock, không dùng cho production**.
-
----
-
-## Swagger UI
-
-| Service | Swagger URL |
-|---|---|
-| product-service | http://localhost:8083/q/swagger-ui |
-| cart-service | http://localhost:8084/q/swagger-ui |
-| order-service | http://localhost:8085/q/swagger-ui |
-
----
-
-## End-to-end test flow
-
-```
-1. [ADMIN] POST /api/categories        → Tạo category
-2. [ADMIN] POST /api/products          → Tạo product
-3. [PUBLIC] GET /api/products          → Browse products
-4. [USER]  POST /api/cart/items        → Add to cart
-5. [USER]  GET  /api/cart              → Xem cart
-6. [USER]  POST /api/orders            → Đặt hàng (order tạo từ cart)
-7. [USER]  GET  /api/orders/{id}       → Xem order đã tạo
-```
-
----
-
-## Cấu trúc project
-
-```
-ecommerce/
-├── pom.xml                    # Parent POM
-├── docker-compose.yml         # PostgreSQL
-├── init-databases.sql         # Tạo 3 databases
-├── common-lib/                # Shared: ApiResponse, exceptions, JWT mock
-├── product-service/           # CRUD products + categories (:8083)
-├── cart-service/              # Shopping cart (:8084)
-└── order-service/             # Order management (:8085)
-```
-
----
-
-## Phases
-
-| Phase | Services | Infra | Flow |
-|---|---|---|---|
-| **1 (current)** | product, cart, order | PostgreSQL | Browse → Cart → Order |
-| **2 (next)** | + api-gateway, auth-service | + Keycloak | Login → full flow via gateway |
-| **3 (future)** | + inventory, payment, notification, user | + Kafka | Full event-driven saga |
-
----
-
-## Environment
-
-Database connections được cấu hình trong `application.properties` của từng service:
-
-```
-product-service → product_db @ localhost:5432
-cart-service    → cart_db    @ localhost:5432
-order-service   → order_db   @ localhost:5432
-User: admin / Password: admin123
+git commit -m "bugfix(order-service): isolate JTA transactions and fix Arjuna OIDC token propagation"
 ```
