@@ -4,6 +4,7 @@ import com.ecommerce.common.dto.ApiResponse;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import io.quarkus.oidc.token.propagation.AccessToken;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -15,6 +16,7 @@ import java.util.UUID;
  * Used by order-service to fetch cart contents when creating an order.
  */
 @RegisterRestClient(configKey = "cart-service")
+@AccessToken
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Path("/api/cart")

@@ -5,7 +5,7 @@ import com.ecommerce.common.dto.ApiResponse;
 import com.ecommerce.order.dto.CreateOrderRequest;
 import com.ecommerce.order.dto.OrderDTO;
 import com.ecommerce.order.service.OrderService;
-import io.quarkus.security.identity.SecurityIdentity;
+
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -27,10 +27,10 @@ import java.util.UUID;
 public class OrderResource {
 
     @Inject OrderService orderService;
-    @Inject SecurityIdentity identity;
+    @Inject org.eclipse.microprofile.jwt.JsonWebToken jwt;
 
     private UUID currentUserId() {
-        return UUID.fromString(identity.getPrincipal().getName());
+        return UUID.fromString(jwt.getSubject());
     }
 
     @POST
