@@ -8,6 +8,8 @@ import jakarta.inject.Inject;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
+import io.smallrye.reactive.messaging.annotations.Blocking;
+
 /**
  * Kafka consumer: listens for payment-processed and order-confirmed events.
  * Creates notification records for users.
@@ -20,6 +22,7 @@ public class EventConsumer {
     @Inject NotificationService notificationService;
 
     @Incoming("payment-processed-in")
+    @Blocking
     public void onPaymentProcessed(PaymentProcessedEvent event) {
         LOG.infof("Received payment-processed for order %s", event.getOrderId());
 
@@ -36,6 +39,7 @@ public class EventConsumer {
     }
 
     @Incoming("order-confirmed-in")
+    @Blocking
     public void onOrderConfirmed(OrderConfirmedEvent event) {
         LOG.infof("Received order-%s for order %s", event.getStatus(), event.getOrderId());
 

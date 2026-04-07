@@ -3,7 +3,7 @@ package com.ecommerce.notification.resource;
 import com.ecommerce.common.dto.ApiResponse;
 import com.ecommerce.notification.entity.Notification;
 import com.ecommerce.notification.service.NotificationService;
-import io.quarkus.security.identity.SecurityIdentity;
+
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -19,10 +19,10 @@ import java.util.UUID;
 public class NotificationResource {
 
     @Inject NotificationService notificationService;
-    @Inject SecurityIdentity identity;
+    @Inject org.eclipse.microprofile.jwt.JsonWebToken jwt;
 
     private UUID currentUserId() {
-        return UUID.fromString(identity.getPrincipal().getName());
+        return UUID.fromString(jwt.getSubject());
     }
 
     @GET
