@@ -54,13 +54,15 @@ public class AuthResource {
         return ApiResponse.success(authService.refreshToken(refreshToken));
     }
 
+    @Inject org.eclipse.microprofile.jwt.JsonWebToken jwt;
+
     @GET
     @Path("/me")
     @RolesAllowed({"USER", "ADMIN"})
     @SecurityRequirement(name = "JWT")
     @Operation(summary = "Get current user info from token")
     public ApiResponse<UserInfoDTO> me() {
-        String userId = identity.getPrincipal().getName();
+        String userId = jwt.getSubject();
         return ApiResponse.success(authService.getUserInfo(userId));
     }
 

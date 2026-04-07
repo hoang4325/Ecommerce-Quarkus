@@ -136,13 +136,19 @@ public class AuthService {
     // ─── Internal helpers ──────────────────────────────────────────────────────
 
     private String getAdminToken() {
-        TokenResponse token = tokenClient.getToken(
-                "client_credentials",
-                adminClientId,
-                adminClientSecret,
-                null, null, null
-        );
-        return token.getAccessToken();
+        LOG.infof("Fetching admin token with clientId=%s, secret=%s", adminClientId, adminClientSecret);
+        try {
+            TokenResponse token = tokenClient.getAdminToken(
+                    "client_credentials",
+                    adminClientId,
+                    adminClientSecret
+            );
+            return token.getAccessToken();
+        } catch (jakarta.ws.rs.WebApplicationException e) {
+            String errorMsg = e.getResponse() != null ? e.getResponse().readEntity(String.class) : e.getMessage();
+            LOG.errorf("Failed to get admin token: %s", errorMsg);
+            throw e;
+        }
     }
 
     private void assignRoleToUser(String adminToken, String userId, String roleName) {

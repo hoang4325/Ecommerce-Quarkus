@@ -27,4 +27,11 @@ public interface KeycloakTokenClient {
             @FormParam("password")      String password,
             @FormParam("scope")         String scope
     );
+
+    @POST
+    TokenResponse getAdminToken(
+            @FormParam("grant_type")    String grantType,
+            @FormParam("client_id")     String clientId,
+            @FormParam("client_secret") String clientSecret
+    );
 }
