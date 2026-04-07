@@ -48,3 +48,4 @@ build/
 # Ignore docker data
 pgdata/
 keycloak_data/
+*.pem
