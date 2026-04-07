@@ -20,10 +20,10 @@ public class UserProfile extends PanacheEntityBase {
     @Column(nullable = false, updatable = false)
     private UUID id; // Same as Keycloak user ID
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
     @Column(nullable = false, unique = true, length = 255)

@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-import org.eclipse.microprofile.jwt.JsonWebToken;
+
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
@@ -24,10 +24,10 @@ public class UserProfileResource {
 
     @Inject UserProfileService userProfileService;
     @Inject SecurityIdentity identity;
-    @Inject JsonWebToken jwt;
+    @Inject org.eclipse.microprofile.jwt.JsonWebToken jwt;
 
     private UUID currentUserId() {
-        return UUID.fromString(identity.getPrincipal().getName());
+        return UUID.fromString(jwt.getSubject());
     }
 
     @GET
