@@ -11,6 +11,8 @@ import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.jboss.logging.Logger;
 
+import io.smallrye.reactive.messaging.annotations.Blocking;
+
 /**
  * Kafka consumer: listens for order-created events.
  * Tries to reserve stock, then produces stock-reserved event.
@@ -26,6 +28,7 @@ public class OrderCreatedConsumer {
     Emitter<StockReservedEvent> stockReservedEmitter;
 
     @Incoming("order-created-in")
+    @Blocking
     public void onOrderCreated(OrderCreatedEvent event) {
         LOG.infof("Received order-created event for order %s", event.getOrderId());
 
