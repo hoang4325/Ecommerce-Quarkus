@@ -80,6 +80,14 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- Shared dependencies for ALL services -->
+    <dependencies>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
+        </dependency>
+    </dependencies>
+
     <build>
         <pluginManagement>
             <plugins>
