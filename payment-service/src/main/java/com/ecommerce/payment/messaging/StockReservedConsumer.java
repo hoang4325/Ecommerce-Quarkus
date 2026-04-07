@@ -12,6 +12,8 @@ import org.jboss.logging.Logger;
 
 import java.math.BigDecimal;
 
+import io.smallrye.reactive.messaging.annotations.Blocking;
+
 /**
  * Kafka consumer: listens for stock-reserved events.
  * If stock reserved successfully → process payment → produce payment-processed event.
@@ -27,6 +29,7 @@ public class StockReservedConsumer {
     Emitter<PaymentProcessedEvent> paymentEmitter;
 
     @Incoming("stock-reserved-in")
+    @Blocking
     public void onStockReserved(StockReservedEvent event) {
         LOG.infof("Received stock-reserved event for order %s (success=%s)", event.getOrderId(), event.isSuccess());
 
