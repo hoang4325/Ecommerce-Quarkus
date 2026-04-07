@@ -84,6 +84,17 @@
   ],
   "users": [
     {
+      "username": "service-account-ecommerce-backend",
+      "enabled": true,
+      "email": "service-account-ecommerce-backend@placeholder.org",
+      "serviceAccountClientId": "ecommerce-backend",
+      "clientRoles": {
+        "realm-management": [
+          "view-users", "manage-users", "query-users", "view-realm", "query-realms"
+        ]
+      }
+    },
+    {
       "username": "admin@ecommerce.com",
       "email": "admin@ecommerce.com",
       "firstName": "Admin",
