@@ -31,6 +31,14 @@ public class CategoryGatewayResource {
         return productServiceProxy.getCategories(authHeader(headers));
     }
 
+    @GET
+    @Path("/{id}")
+    @PermitAll
+    @Operation(summary = "Get category by ID")
+    public Response getById(@Context HttpHeaders headers, @PathParam("id") String id) {
+        return productServiceProxy.getCategory(authHeader(headers), id);
+    }
+
     @POST
     @RolesAllowed("ADMIN")
     @SecurityRequirement(name = "JWT")

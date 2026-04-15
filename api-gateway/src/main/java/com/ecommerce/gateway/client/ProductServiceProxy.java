@@ -56,6 +56,13 @@ public interface ProductServiceProxy {
     @Path("/api/categories")
     Response getCategories(@HeaderParam("Authorization") String auth);
 
+    @GET
+    @Path("/api/categories/{id}")
+    Response getCategory(
+            @HeaderParam("Authorization") String auth,
+            @PathParam("id") String id
+    );
+
     @POST
     @Path("/api/categories")
     Response createCategory(
