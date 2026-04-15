@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply font-sans text-primary bg-white antialiased;
+  }
+  a {
+    @apply text-inherit no-underline;
+  }
+}
+
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-primary text-white text-sm font-semibold tracking-wide uppercase transition-all duration-200 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-6 py-3 bg-accent text-white text-sm font-semibold tracking-wide uppercase transition-all duration-200 hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-primary text-primary text-sm font-semibold tracking-wide uppercase transition-all duration-200 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-outline-accent {
+    @apply inline-flex items-center justify-center px-6 py-3 border border-accent text-accent text-sm font-semibold tracking-wide uppercase transition-all duration-200 hover:bg-accent hover:text-white disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-primary transition-colors duration-200;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full border border-border px-4 py-3 text-sm text-primary placeholder-muted focus:outline-none focus:border-primary transition-colors duration-200;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white border border-border;
+  }
+
+  /* Section title */
+  .section-title {
+    @apply text-2xl font-bold tracking-wide uppercase text-primary;
+  }
+  .section-subtitle {
+    @apply text-sm text-muted font-medium tracking-widest uppercase;
+  }
+
+  /* Badge */
+  .badge-accent {
+    @apply inline-flex items-center px-2 py-0.5 text-xs font-bold text-white bg-accent;
+  }
+  .badge-neutral {
+    @apply inline-flex items-center px-2 py-0.5 text-xs font-medium text-gray-600 bg-surface;
+  }
+
+  /* Status badges */
+  .status-pending {
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold text-yellow-700 bg-yellow-100;
+  }
+  .status-confirmed {
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold text-green-700 bg-green-100;
+  }
+  .status-cancelled {
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold text-red-700 bg-red-100;
+  }
+  .status-reserved {
+    @apply inline-flex items-center px-2.5 py-1 text-xs font-semibold text-blue-700 bg-blue-100;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-border my-6;
+  }
+
+  /* Container */
+  .container-shop {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+@layer utilities {
+  .text-price {
+    @apply text-accent font-bold;
+  }
+  .text-price-old {
+    @apply text-muted line-through text-sm;
+  }
+}
