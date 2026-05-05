@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { orderAdminApi } from '../../api/endpoints/orderApi';
 import { productApi, categoryApi } from '../../api/endpoints/productApi';
@@ -17,7 +18,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 const StatCard = ({ title, value, icon: Icon, trend, trendValue, colorClass }: {
   title: string;
   value: string | number;
-  icon: any;
+  icon: React.ElementType;
   trend?: 'up' | 'down';
   trendValue?: string;
   colorClass: string;

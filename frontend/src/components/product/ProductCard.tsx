@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, Eye } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { ProductDTO } from '../../types';
 import { cartApi } from '../../api/endpoints/cartApi';
