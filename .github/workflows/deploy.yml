@@ -220,33 +220,38 @@ jobs:
           kubectl apply -f k8s/secret.yaml -n ${{ env.K8S_NAMESPACE }}
 
       - name: Deploy all services
+        shell: pwsh
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          # Replace IMAGE_TAG placeholder in all manifests
-          find k8s/ -name "*.yaml" | xargs sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g"
-          find k8s/ -name "*.yaml" | xargs sed -i "s|IMAGE_REGISTRY|${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}|g"
-
+          $registry = "${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}"
+          Get-ChildItem -Path k8s/ -Filter "*.yaml" -Recurse | ForEach-Object {
+            (Get-Content $_.FullName) `
+              -replace 'IMAGE_TAG', $env:IMAGE_TAG `
+              -replace 'IMAGE_REGISTRY', $registry | 
+            Set-Content $_.FullName
+          }
           kubectl apply -f k8s/ -n ${{ env.K8S_NAMESPACE }}
 
       - name: Wait for rollouts
+        shell: pwsh
         run: |
-          SERVICES="api-gateway product-service frontend"
-          for svc in $SERVICES; do
-            echo "⏳ Waiting for $svc rollout..."
-            kubectl rollout status deployment/$svc \
-              -n ${{ env.K8S_NAMESPACE }} \
-              --timeout=300s
-            echo "✅ $svc is healthy"
-          done
+          $SERVICES = @("api-gateway", "product-service", "frontend")
+          foreach ($svc in $SERVICES) {
+            Write-Host "⏳ Waiting for $svc rollout..."
+            kubectl rollout status deployment/$svc -n ${{ env.K8S_NAMESPACE }} --timeout=300s
+            Write-Host "✅ $svc is healthy"
+          }
 
       - name: Verify running pods
+        shell: pwsh
         run: |
           kubectl get pods -n ${{ env.K8S_NAMESPACE }} -l app.kubernetes.io/part-of=ecommerce
           kubectl get services -n ${{ env.K8S_NAMESPACE }}
 
       - name: Notify on failure
         if: failure()
+        shell: pwsh
         run: |
-          echo "❌ Deployment failed! Check the logs above."
-          kubectl get events -n ${{ env.K8S_NAMESPACE }} --sort-by='.lastTimestamp' | tail -20
+          Write-Host "❌ Deployment failed! Check the logs above."
+          kubectl get events -n ${{ env.K8S_NAMESPACE }} --sort-by='.lastTimestamp' | Select-Object -Last 20
