@@ -189,36 +189,28 @@ jobs:
         with:
           version: 'v1.29.0'
 
-      - name: Configure kubectl (kubeconfig)
-        # TODO: Add KUBECONFIG secret in GitHub repository settings
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-
       - name: Verify cluster connectivity
+        shell: powershell
         run: kubectl cluster-info --request-timeout=15s
 
       - name: Create namespace (idempotent)
+        shell: powershell
         run: |
           kubectl create namespace ${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Create/Update image pull secret for GHCR
+        shell: powershell
         run: |
-          kubectl create secret docker-registry ghcr-pull-secret \
-            --docker-server=${{ env.REGISTRY }} \
-            --docker-username=${{ github.actor }} \
-            --docker-password=${{ secrets.GITHUB_TOKEN }} \
-            --namespace=${{ env.K8S_NAMESPACE }} \
-            --dry-run=client -o yaml | kubectl apply -f -
+          kubectl create secret docker-registry ghcr-pull-secret --docker-server=${{ env.REGISTRY }} --docker-username=${{ github.actor }} --docker-password=${{ secrets.GITHUB_TOKEN }} --namespace=${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Apply ConfigMaps & Secrets
+        shell: powershell
         run: |
           kubectl apply -f k8s/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
           kubectl apply -f k8s/secret.yaml -n ${{ env.K8S_NAMESPACE }}
 
       - name: Deploy all services
-        shell: pwsh
+        shell: powershell
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
@@ -232,21 +224,21 @@ jobs:
           kubectl apply -f k8s/ -n ${{ env.K8S_NAMESPACE }}
 
       - name: Wait for rollouts
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "Kubernetes is rolling out the updates asynchronously..."
           # Fetch the rollout status without blocking the pipeline completely
           kubectl get deployments -n ${{ env.K8S_NAMESPACE }}
 
       - name: Verify running pods
-        shell: pwsh
+        shell: powershell
         run: |
           kubectl get pods -n ${{ env.K8S_NAMESPACE }} -l app.kubernetes.io/part-of=ecommerce
           kubectl get services -n ${{ env.K8S_NAMESPACE }}
 
       - name: Notify on failure
         if: failure()
-        shell: pwsh
+        shell: powershell
         run: |
           Write-Host "❌ Deployment failed! Check the logs above."
           kubectl get events -n ${{ env.K8S_NAMESPACE }} --sort-by='.lastTimestamp' | Select-Object -Last 20
