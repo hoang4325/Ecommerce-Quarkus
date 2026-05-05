@@ -3,12 +3,15 @@ import { ShoppingCartOutlined, OrderedListOutlined, BellOutlined } from '@ant-de
 import { useQuery } from '@tanstack/react-query';
 import { orderApi } from '../../api/endpoints/orderApi';
 import { notificationApi } from '../../api/endpoints/notificationApi';
-import { authStore } from '../../auth/authStore';
+import { useAuthStore } from '../../auth/authStore';
 
 const DashboardPage = () => {
+  const { user, isAdmin } = useAuthStore();
+  const isAdminUser = isAdmin();
+
   const { data: orders } = useQuery({
     queryKey: ['orders'],
-    queryFn: () => orderApi.listMyOrders().then((r) => r.data.data!),
+    queryFn: () => orderApi.getOrders().then((r) => r.data.data ?? []),
   });
 
   const { data: unreadNotifications } = useQuery({
@@ -18,7 +21,7 @@ const DashboardPage = () => {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 24 }}>Welcome, {authStore.user?.firstName || 'User'}!</h2>
+      <h2 style={{ marginBottom: 24 }}>Welcome, {user?.firstName || 'User'}!</h2>
       <Row gutter={16}>
         <Col span={6}>
           <Card>
@@ -59,7 +62,7 @@ const DashboardPage = () => {
         </Col>
       </Row>
 
-      {authStore.isAdmin && (
+      {isAdminUser && (
         <Card style={{ marginTop: 24 }} title="Admin Quick Info">
           <p>You have admin access. Use the sidebar to manage products, orders, inventory, and more.</p>
         </Card>

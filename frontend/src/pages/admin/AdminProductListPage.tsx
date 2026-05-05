@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Pencil, Trash2, X, Check, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 import { productApi, categoryApi } from '../../api/endpoints/productApi';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Pagination from '../../components/ui/Pagination';
