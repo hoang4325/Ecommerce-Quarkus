@@ -13,14 +13,21 @@ import java.util.UUID;
 @ApplicationScoped
 public class ProductRepository implements PanacheRepositoryBase<Product, UUID> {
 
-    public PanacheQuery<Product> findAllActive(Page page, String search) {
+    public PanacheQuery<Product> findAllActive(Page page, String search, UUID categoryId) {
+        StringBuilder query = new StringBuilder("active = true");
+        io.quarkus.panache.common.Parameters params = new io.quarkus.panache.common.Parameters();
+
         if (search != null && !search.isBlank()) {
-            return find("active = true and (lower(name) like lower(?1) or lower(description) like lower(?1))",
-                    Sort.by("createdAt").descending(),
-                    "%" + search.trim() + "%")
-                    .page(page);
+            query.append(" and (lower(name) like lower(:search) or lower(description) like lower(:search))");
+            params.and("search", "%" + search.trim() + "%");
         }
-        return find("active = true", Sort.by("createdAt").descending()).page(page);
+
+        if (categoryId != null) {
+            query.append(" and category.id = :categoryId");
+            params.and("categoryId", categoryId);
+        }
+
+        return find(query.toString(), Sort.by("createdAt").descending(), params).page(page);
     }
 
     public Optional<Product> findBySlug(String slug) {

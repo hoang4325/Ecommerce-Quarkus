@@ -1,0 +1,252 @@
+name: CI/CD — E-Commerce Platform
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# ─── Global env ───────────────────────────────────────────────────────────────
+env:
+  # TODO: Change to your Docker Hub username or ghcr.io/<org>
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ${{ github.repository_owner }}/ecommerce
+
+  # TODO: Set your Kubernetes namespace
+  K8S_NAMESPACE: ecommerce
+
+  JAVA_VERSION: '17'
+  NODE_VERSION: '22'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1: Build & Test Backend (Quarkus)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-backend:
+    name: Build Backend (Quarkus)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: api-gateway
+            port: 8083
+          - name: product-service
+            port: 8085
+          - name: cart-service
+            port: 8086
+          - name: order-service
+            port: 8087
+          - name: auth-service
+            port: 8082
+          - name: inventory-service
+            port: 8088
+          - name: payment-service
+            port: 8089
+          - name: notification-service
+            port: 8090
+          - name: user-service
+            port: 8091
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build & Test ${{ matrix.service.name }}
+        run: |
+          mvn verify \
+            -pl backend/${{ matrix.service.name }} -am \
+            -Dquarkus.http.test-port=0 \
+            --batch-mode --no-transfer-progress
+        # Note: Tests against PostgreSQL/Kafka use Quarkus Dev Services (Testcontainers)
+        # If your CI runner cannot run Docker-in-Docker, add: -DskipTests
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Docker image — ${{ matrix.service.name }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./backend/${{ matrix.service.name }}/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:latest
+          cache-from: type=gha,scope=${{ matrix.service.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Build & Test Frontend (React/Vite)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build-frontend:
+    name: Build Frontend (React/Vite)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci --frozen-lockfile
+
+      - name: Type-check
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Build (production)
+        working-directory: frontend
+        run: npm run build
+        env:
+          # TODO: Update this to your api-gateway public URL
+          VITE_API_BASE_URL: /api
+
+      - name: Log in to GitHub Container Registry
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build & Push Docker image — frontend
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./frontend/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_BASE_URL=/api
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 3: Deploy to Kubernetes
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: [ build-backend, build-frontend ]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    permissions:
+      contents: read
+      packages: read
+
+    environment:
+      name: production
+      # TODO: Set your app URL
+      url: http://ecommerce.example.com  # TODO
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
+
+      - name: Configure kubectl (kubeconfig)
+        # TODO: Add KUBECONFIG secret in GitHub repository settings
+        run: |
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
+
+      - name: Verify cluster connectivity
+        run: kubectl cluster-info --request-timeout=15s
+
+      - name: Create namespace (idempotent)
+        run: |
+          kubectl create namespace ${{ env.K8S_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Create/Update image pull secret for GHCR
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --namespace=${{ env.K8S_NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Apply ConfigMaps & Secrets
+        run: |
+          kubectl apply -f k8s/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/secret.yaml -n ${{ env.K8S_NAMESPACE }}
+
+      - name: Deploy all services
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          # Replace IMAGE_TAG placeholder in all manifests
+          find k8s/ -name "*.yaml" | xargs sed -i "s|IMAGE_TAG|${IMAGE_TAG}|g"
+          find k8s/ -name "*.yaml" | xargs sed -i "s|IMAGE_REGISTRY|${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}|g"
+
+          kubectl apply -f k8s/ -n ${{ env.K8S_NAMESPACE }}
+
+      - name: Wait for rollouts
+        run: |
+          SERVICES="api-gateway product-service frontend"
+          for svc in $SERVICES; do
+            echo "⏳ Waiting for $svc rollout..."
+            kubectl rollout status deployment/$svc \
+              -n ${{ env.K8S_NAMESPACE }} \
+              --timeout=300s
+            echo "✅ $svc is healthy"
+          done
+
+      - name: Verify running pods
+        run: |
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -l app.kubernetes.io/part-of=ecommerce
+          kubectl get services -n ${{ env.K8S_NAMESPACE }}
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Deployment failed! Check the logs above."
+          kubectl get events -n ${{ env.K8S_NAMESPACE }} --sort-by='.lastTimestamp' | tail -20

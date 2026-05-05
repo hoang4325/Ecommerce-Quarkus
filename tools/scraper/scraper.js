@@ -32,10 +32,16 @@ async function scrapeAndSeed() {
   }
 
   console.log('Khởi động trình duyệt cào dữ liệu...');
-  const browser = await puppeteer.launch({ headless: 'new' });
+  const browser = await puppeteer.launch({ 
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
   const page = await browser.newPage();
   
+  await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
   // Disable loading images/fonts to speed up scraping
+  /*
   await page.setRequestInterception(true);
   page.on('request', (req) => {
     if (req.resourceType() === 'image' || req.resourceType() === 'stylesheet' || req.resourceType() === 'font') {
@@ -44,12 +50,14 @@ async function scrapeAndSeed() {
       req.continue();
     }
   });
+  */
+
 
   try {
     // We will hardcode a few known category URLs to Torano to ensure we get data
     // Torano has clean structures like /collections/ao-thun-nam
     // Configuration for pagination
-    const MAX_PAGES_PER_CATEGORY = 3; 
+    const MAX_PAGES_PER_CATEGORY = 5; 
     const targets = [
       { name: 'Áo Polo Nam', url: 'https://torano.vn/collections/ao-polo' },
       { name: 'Áo Sơ Mi Nam', url: 'https://torano.vn/collections/ao-so-mi' },
@@ -90,43 +98,32 @@ async function scrapeAndSeed() {
         console.log(`\n--- Đang cào dữ liệu Trang ${pNum}: ${pageUrl} ---`);
         
         try {
-          await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          await page.goto(pageUrl, { waitUntil: 'networkidle2', timeout: 60000 });
           
+          // Wait for products to load
+          try {
+            await page.waitForSelector('.product-loop', { timeout: 10000 });
+          } catch (e) {
+            console.log(`Không tìm thấy .product-loop trên trang ${pNum}.`);
+          }
+
           const products = await page.evaluate(() => {
             const items = [];
-            const allNodes = Array.from(document.querySelectorAll('*'));
-            const priceNodes = allNodes.filter(n => 
-              n.children.length === 0 && 
-              n.textContent.match(/[0-9,\.]+\s*(₫|đ|d|vnđ)/i)
-            );
+            const productNodes = document.querySelectorAll('.product-loop');
 
-            priceNodes.forEach(priceNode => {
-              let container = null;
-              let curr = priceNode;
-              for(let i=0; i<6; i++) {
-                if (curr.parentElement) {
-                  curr = curr.parentElement;
-                  if (curr.querySelector('img') && (curr.querySelector('h3') || curr.querySelector('h2') || curr.querySelector('a'))) {
-                    container = curr;
-                  }
-                }
-              }
+            productNodes.forEach(node => {
+              const titleEl = node.querySelector('.proloop-title a, .product-name a, h3 a');
+              const priceEl = node.querySelector('.proloop-price, .current-price, .price');
+              const imgEl = node.querySelector('.proloop-image img, .product-image img, img');
 
-              if (container) {
-                let titleStr = '';
-                const h3 = container.querySelector('h3, h2');
-                if (h3) titleStr = h3.innerText.trim();
-                else {
-                  const a = container.querySelector('a[title]');
-                  if (a) titleStr = a.getAttribute('title');
-                }
+              if (titleEl && priceEl && imgEl) {
+                const title = titleEl.innerText.trim();
+                const price = priceEl.innerText.trim();
+                // Get the real image URL from data-src or src or data-lazyload
+                const img = imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || imgEl.getAttribute('data-lazyload');
                 
-                const imgEl = container.querySelector('img');
-                const img = imgEl ? (imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || imgEl.getAttribute('data-lazyload')) : '';
-                const priceStr = priceNode.textContent.trim();
-                
-                if (titleStr && titleStr.length > 3 && img && !items.find(i => i.name === titleStr)) {
-                  items.push({ name: titleStr, price: priceStr, image: img });
+                if (title && price && img && !img.includes('logo.png') && img.length > 10) {
+                  items.push({ name: title, price, image: img });
                 }
               }
             });
@@ -139,6 +136,10 @@ async function scrapeAndSeed() {
           }
 
           console.log(`Tìm thấy ${products.length} sản phẩm. Đang đẩy vào DB...`);
+
+
+
+
 
           // 3. Post to our DB in batches
           const BATCH_SIZE = 5; 

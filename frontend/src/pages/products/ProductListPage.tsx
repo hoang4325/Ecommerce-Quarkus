@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { productApi, categoryApi } from '../../api/endpoints/productApi';
 import ProductCard from '../../components/product/ProductCard';
 import ProductGrid from '../../components/product/ProductGrid';
@@ -28,6 +29,7 @@ export default function ProductListPage() {
     queryFn: async () => {
       const params: Record<string, string | number> = { page, size: PAGE_SIZE };
       if (search) params.search = search;
+      if (categoryId) params.categoryId = categoryId;
       const res = await productApi.list(params);
       return res.data.data;
     },
@@ -74,7 +76,13 @@ export default function ProductListPage() {
   const activeCategoryName = categories.find(c => c.id === categoryId)?.name;
 
   return (
-    <div className="container-shop py-10">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4 }}
+      className="container-shop py-10"
+    >
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-muted mb-6">
         <span>Trang chủ</span>
@@ -147,9 +155,17 @@ export default function ProductListPage() {
         </aside>
 
         {/* Sidebar overlay */}
-        {sidebarOpen && (
-          <div className="fixed inset-0 bg-black/40 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-        )}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 z-40 lg:hidden" 
+              onClick={() => setSidebarOpen(false)} 
+            />
+          )}
+        </AnimatePresence>
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
@@ -175,7 +191,7 @@ export default function ProductListPage() {
           </div>
 
           {isLoading ? (
-            <ProductGrid cols={3}>
+            <ProductGrid cols={4}>
               {Array(PAGE_SIZE).fill(0).map((_, i) => <SkeletonCard key={i} />)}
             </ProductGrid>
           ) : products.length === 0 ? (
@@ -191,7 +207,7 @@ export default function ProductListPage() {
             />
           ) : (
             <>
-              <ProductGrid cols={3}>
+              <ProductGrid cols={4}>
                 {products.map(p => <ProductCard key={p.id} product={p} />)}
               </ProductGrid>
               <Pagination
@@ -208,6 +224,6 @@ export default function ProductListPage() {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -49,3 +49,5 @@ build/
 pgdata/
 keycloak_data/
 *.pem
+
+*.tar

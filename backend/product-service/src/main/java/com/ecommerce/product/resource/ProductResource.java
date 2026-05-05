@@ -34,8 +34,9 @@ public class ProductResource {
     public ApiResponse<PagedResponse<ProductDTO>> list(
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("10") int size,
-            @QueryParam("search") String search) {
-        return ApiResponse.success(productService.findAll(page, size, search));
+            @QueryParam("search") String search,
+            @QueryParam("categoryId") UUID categoryId) {
+        return ApiResponse.success(productService.findAll(page, size, search, categoryId));
     }
 
     @GET

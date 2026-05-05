@@ -1,0 +1,45 @@
+---
+# ═══════════════════════════════════════════════════════════════════════════════
+# ConfigMap — Non-sensitive shared configuration
+# TODO: Update all values marked with TODO before deploying
+# ═══════════════════════════════════════════════════════════════════════════════
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce   # TODO: change if needed
+  labels:
+    app.kubernetes.io/part-of: ecommerce
+data:
+  # ── Database ────────────────────────────────────────────────────────────────
+  DB_HOST: "postgres-service"           # TODO: use your PostgreSQL service name or external host
+  DB_PORT: "5432"
+  DB_NAME_PRODUCT: "product_db"
+  DB_NAME_ORDER: "order_db"
+  DB_NAME_CART: "cart_db"
+  DB_NAME_INVENTORY: "inventory_db"
+  DB_NAME_NOTIFICATION: "notification_db"
+  DB_NAME_PAYMENT: "payment_db"
+  DB_NAME_USER: "user_db"
+
+  # ── Keycloak ────────────────────────────────────────────────────────────────
+  KEYCLOAK_URL: "http://keycloak-service:8080"  # TODO: update to your Keycloak URL
+  KEYCLOAK_REALM: "ecommerce"
+
+  # ── Kafka ───────────────────────────────────────────────────────────────────
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"  # TODO: update to your Kafka service
+
+  # ── Service internal URLs (k8s DNS) ─────────────────────────────────────────
+  PRODUCT_SERVICE_URL: "http://product-service:8085"
+  CART_SERVICE_URL: "http://cart-service:8086"
+  ORDER_SERVICE_URL: "http://order-service:8087"
+  AUTH_SERVICE_URL: "http://auth-service:8082"
+  INVENTORY_SERVICE_URL: "http://inventory-service:8088"
+  PAYMENT_SERVICE_URL: "http://payment-service:8089"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8090"
+  USER_SERVICE_URL: "http://user-service:8091"
+
+  # ── App settings ────────────────────────────────────────────────────────────
+  QUARKUS_LOG_LEVEL: "INFO"
+  QUARKUS_HTTP_CORS: "true"
+  QUARKUS_HTTP_CORS_ORIGINS: "https://ecommerce.example.com"  # TODO: update domain

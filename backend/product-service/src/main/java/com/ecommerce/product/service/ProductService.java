@@ -28,9 +28,9 @@ public class ProductService {
     @Inject CategoryRepository categoryRepository;
     @Inject ProductMapper productMapper;
 
-    public PagedResponse<ProductDTO> findAll(int page, int size, String search) {
+    public PagedResponse<ProductDTO> findAll(int page, int size, String search, UUID categoryId) {
         Page pageRequest = Page.of(page, size);
-        var query = productRepository.findAllActive(pageRequest, search);
+        var query = productRepository.findAllActive(pageRequest, search, categoryId);
         long total = query.count();
         var products = query.list().stream().map(productMapper::toDTO).toList();
         return PagedResponse.of(products, page, size, total);

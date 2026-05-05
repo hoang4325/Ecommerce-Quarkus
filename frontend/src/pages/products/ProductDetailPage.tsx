@@ -57,6 +57,13 @@ export default function ProductDetailPage() {
   const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
 
+  // Mock logic to show sale UI
+  const isSale = data ? data.price > 500000 : false;
+  const originalPrice = isSale && data ? data.price * 1.3 : null; // 30% off mock
+  const formattedOriginalPrice = originalPrice 
+    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(originalPrice)
+    : null;
+
   const handleAddToCart = async () => {
     if (!isAuthenticated() || !data) return;
     if (outOfStock) {
@@ -139,8 +146,14 @@ export default function ProductDetailPage() {
           <h1 className="text-3xl font-bold text-primary leading-tight mb-4">{data.name}</h1>
 
           {/* Price */}
-          <div className="flex items-baseline gap-3 mb-6">
-            <span className="text-3xl font-black text-accent">{formatPrice(data.price)}</span>
+          <div className="flex items-end gap-4 mb-6">
+            <span className="text-4xl font-black text-accent">{formatPrice(data.price)}</span>
+            {formattedOriginalPrice && (
+              <span className="text-xl text-gray-400 line-through font-medium mb-1">{formattedOriginalPrice}</span>
+            )}
+            {isSale && (
+              <span className="bg-accent text-white text-xs font-bold px-2 py-1 mb-2 uppercase tracking-widest">-30%</span>
+            )}
           </div>
 
           <div className="divider" />

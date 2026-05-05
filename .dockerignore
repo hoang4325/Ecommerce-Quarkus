@@ -1,0 +1,48 @@
+# ─── Git ─────────────────────────────────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+
+# ─── IDE / OS ────────────────────────────────────────────────────────────────
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ─── Build output (exclude from context — builder will generate these) ────────
+**/target/
+**/dist/
+**/.quarkus/
+
+# ─── Node.js ─────────────────────────────────────────────────────────────────
+**/node_modules/
+frontend/.cache
+frontend/dist
+
+# ─── Docs & scripts (not needed inside image) ─────────────────────────────────
+README.md
+docs/
+*.md
+tools/
+*.ps1
+*.sh
+
+# ─── Kubernetes & CI (not needed in app image) ────────────────────────────────
+k8s/
+.github/
+
+# ─── Test files ───────────────────────────────────────────────────────────────
+**/*Test.java
+**/*IT.java
+**/test/
+
+# ─── Local dev config ─────────────────────────────────────────────────────────
+docker-compose*.yml
+init-databases.sql
+check-products.js
+keycloak/

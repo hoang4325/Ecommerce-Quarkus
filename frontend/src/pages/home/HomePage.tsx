@@ -1,18 +1,43 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Truck, RotateCcw, Shield, Headphones } from 'lucide-react';
+import { ArrowRight, Truck, RotateCcw, CreditCard, Headphones } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { productApi, categoryApi } from '../../api/endpoints/productApi';
 import ProductCard from '../../components/product/ProductCard';
 import ProductGrid from '../../components/product/ProductGrid';
 import { SkeletonCard } from '../../components/ui/LoadingSpinner';
-import type { CategoryDTO, ProductDTO } from '../../types';
+import type { ProductDTO, CategoryDTO } from '../../types';
 
 const FEATURES = [
   { icon: Truck, title: 'Miễn phí vận chuyển', desc: 'Đơn hàng từ 500.000đ' },
-  { icon: RotateCcw, title: 'Đổi trả dễ dàng', desc: 'Trong vòng 30 ngày' },
-  { icon: Shield, title: 'Hàng chính hãng', desc: '100% đảm bảo chất lượng' },
-  { icon: Headphones, title: 'Hỗ trợ 24/7', desc: 'Luôn sẵn sàng phục vụ' },
+  { icon: RotateCcw, title: 'Đổi hàng dễ dàng', desc: 'Trong vòng 30 ngày' },
+  { icon: CreditCard, title: 'Thanh toán đa dạng', desc: 'COD, Thẻ, VNPay, Momo' },
+  { icon: Headphones, title: 'Hỗ trợ nhanh', desc: 'Tư vấn 24/7' },
 ];
+
+const CATEGORY_IMAGES = [
+  'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
+  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80',
+  'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&q=80',
+  'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500&q=80',
+  'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&q=80',
+  'https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=500&q=80',
+];
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" as const } }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.15
+    }
+  }
+};
 
 export default function HomePage() {
   const { data: productsData, isLoading: loadingProducts } = useQuery({
@@ -37,127 +62,188 @@ export default function HomePage() {
   const categories: CategoryDTO[] = categoriesData ?? [];
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       {/* Hero Banner */}
-      <section className="relative bg-primary overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-primary opacity-90" />
-        <div className="relative container-shop flex flex-col items-start justify-center py-28 md:py-40">
-          <span className="text-accent text-xs font-bold uppercase tracking-[0.3em] mb-4">Bộ sưu tập mới</span>
-          <h1 className="text-5xl md:text-7xl font-black text-white leading-none tracking-tight mb-6 max-w-xl">
-            Phong cách
-            <span className="block text-accent">Tinh tế</span>
-          </h1>
-          <p className="text-gray-300 text-lg mb-10 max-w-md leading-relaxed">
-            Khám phá bộ sưu tập thời trang cao cấp — nơi phong cách gặp gỡ chất lượng.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Link to="/products" className="btn-accent px-8 py-4 text-sm">
+      <section className="relative bg-primary overflow-hidden h-[80vh] min-h-[600px] flex items-center">
+        <motion.div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=1920&auto=format&fit=crop')" }}
+          initial={{ scale: 1.1 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+        <motion.div
+          className="relative container-shop flex flex-col items-start justify-center w-full"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.span variants={fadeInUp} className="text-accent text-sm font-bold uppercase tracking-[0.4em] mb-4">Bộ sưu tập Xuân Hè 2026</motion.span>
+          <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[1.1] tracking-tighter mb-6 max-w-2xl">
+            PHONG CÁCH <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-500">ĐÀN ÔNG</span>
+          </motion.h1>
+          <motion.p variants={fadeInUp} className="text-gray-300 text-lg md:text-xl mb-10 max-w-md leading-relaxed font-light">
+            Sự kết hợp hoàn hảo giữa nét lịch lãm cổ điển và sự năng động của thời trang đương đại.
+          </motion.p>
+          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
+            <Link to="/products" className="bg-white text-primary px-10 py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors">
               Mua ngay
             </Link>
-            <Link to="/products" className="btn-outline px-8 py-4 text-sm border-white text-white hover:bg-white hover:text-primary">
-              Xem bộ sưu tập <ArrowRight size={16} className="ml-2" />
+            <Link to="/products?search=bộ+sưu+tập" className="border border-white text-white px-10 py-4 text-sm font-bold uppercase tracking-widest hover:bg-white hover:text-primary transition-colors flex items-center justify-center">
+              Khám phá <ArrowRight size={16} className="ml-2" />
             </Link>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Feature strip */}
       <section className="border-b border-border bg-white">
         <div className="container-shop">
-          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
+          <motion.div
+            className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-border"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+          >
             {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex items-center gap-4 py-6 px-4">
-                <div className="w-10 h-10 flex items-center justify-center flex-shrink-0">
-                  <Icon size={22} className="text-primary" />
+              <motion.div variants={fadeInUp} key={title} className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 py-8 px-4">
+                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center flex-shrink-0">
+                  <Icon size={24} className="text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-primary">{title}</p>
-                  <p className="text-xs text-muted">{desc}</p>
+                  <p className="text-sm font-bold text-primary uppercase tracking-wide mb-1">{title}</p>
+                  <p className="text-xs text-muted font-medium">{desc}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Categories */}
+      {/* Featured Categories */}
       {categories.length > 0 && (
-        <section className="container-shop py-16">
-          <div className="flex items-end justify-between mb-8">
-            <div>
-              <p className="section-subtitle mb-2">Danh mục</p>
-              <h2 className="section-title">Khám phá theo danh mục</h2>
-            </div>
-            <Link to="/products" className="text-sm font-medium text-primary hover:text-accent transition-colors flex items-center gap-1">
-              Xem tất cả <ArrowRight size={14} />
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {categories.slice(0, 6).map((cat: CategoryDTO) => (
-              <Link
-                key={cat.id}
-                to={`/products?category=${cat.id}`}
-                className="group flex flex-col items-center p-6 border border-border hover:border-primary transition-colors bg-white"
-              >
-                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center mb-3 group-hover:bg-primary transition-colors">
-                  <span className="text-2xl">👕</span>
-                </div>
-                <span className="text-sm font-medium text-center group-hover:text-accent transition-colors">{cat.name}</span>
-              </Link>
+        <section className="container-shop py-20">
+          <motion.div
+            className="text-center mb-12"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
+          >
+            <h2 className="text-3xl font-black text-primary uppercase tracking-widest">Danh mục nổi bật</h2>
+            <div className="w-16 h-1 bg-accent mx-auto mt-4"></div>
+          </motion.div>
+
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {categories.slice(0, 6).map((cat, index) => (
+              <motion.div variants={fadeInUp} key={cat.id}>
+                <Link
+                  to={`/products?category=${cat.id}`}
+                  className="group relative block aspect-[3/4] overflow-hidden bg-gray-100 h-full"
+                >
+                  <img
+                    src={CATEGORY_IMAGES[index % CATEGORY_IMAGES.length]}
+                    alt={cat.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
+                    <span className="text-white font-bold text-sm uppercase tracking-widest text-center group-hover:text-accent transition-colors">
+                      {cat.name}
+                    </span>
+                  </div>
+                </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </section>
       )}
 
       {/* New Arrivals */}
-      <section className="bg-surface py-16">
+      <section className="bg-surface py-20">
         <div className="container-shop">
-          <div className="flex items-end justify-between mb-8">
+          <motion.div
+            className="flex flex-col md:flex-row items-center justify-between mb-12 gap-6"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            variants={fadeInUp}
+          >
             <div>
-              <p className="section-subtitle mb-2">Mới nhất</p>
-              <h2 className="section-title">Sản phẩm nổi bật</h2>
+              <h2 className="text-3xl font-black text-primary uppercase tracking-widest">Sản phẩm mới</h2>
+              <div className="w-16 h-1 bg-accent mt-4"></div>
             </div>
-            <Link to="/products" className="text-sm font-medium text-primary hover:text-accent transition-colors flex items-center gap-1">
-              Xem tất cả <ArrowRight size={14} />
+            <Link to="/products" className="text-sm font-bold text-primary hover:text-accent transition-colors uppercase tracking-widest flex items-center gap-2 border-b-2 border-primary hover:border-accent pb-1">
+              Xem tất cả <ArrowRight size={16} />
             </Link>
-          </div>
+          </motion.div>
+
           {loadingProducts ? (
-            <ProductGrid>
+            <ProductGrid cols={4}>
               {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)}
             </ProductGrid>
           ) : (
-            <ProductGrid>
+            <ProductGrid cols={4}>
               {products.map((p) => <ProductCard key={p.id} product={p} />)}
             </ProductGrid>
           )}
         </div>
       </section>
 
-      {/* Banner mid */}
-      <section className="py-16">
-        <div className="container-shop">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="relative bg-gray-100 overflow-hidden group cursor-pointer">
-              <div className="aspect-[4/3] p-10 flex flex-col justify-end">
-                <p className="text-xs font-bold uppercase tracking-widest text-accent mb-2">Bộ sưu tập</p>
-                <h3 className="text-3xl font-black text-primary mb-4">Thời trang nam</h3>
-                <Link to="/products?search=nam" className="btn-primary px-6 py-2.5 self-start text-xs">
-                  Khám phá
-                </Link>
+      {/* Mid Banners */}
+      <section className="container-shop py-20">
+        <motion.div
+          className="grid md:grid-cols-2 gap-6"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+        >
+          <motion.div variants={fadeInUp}>
+            <Link to="/products?search=công+sở" className="group relative overflow-hidden aspect-[4/3] md:aspect-[3/2] block bg-gray-900">
+              <img
+                src="https://images.unsplash.com/photo-1603252109303-2751441dd157?w=800&q=80"
+                alt="Thời trang công sở"
+                className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 group-hover:opacity-60 transition-all duration-700"
+              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                <span className="text-white font-bold text-3xl md:text-4xl uppercase tracking-widest mb-4">Lịch lãm</span>
+                <span className="text-sm font-medium text-white uppercase tracking-[0.3em] border border-white px-6 py-2 group-hover:bg-white group-hover:text-primary transition-colors">
+                  Thời trang công sở
+                </span>
               </div>
-            </div>
-            <div className="relative bg-gray-900 overflow-hidden group cursor-pointer">
-              <div className="aspect-[4/3] p-10 flex flex-col justify-end">
-                <p className="text-xs font-bold uppercase tracking-widest text-accent mb-2">Bộ sưu tập</p>
-                <h3 className="text-3xl font-black text-white mb-4">Thời trang nữ</h3>
-                <Link to="/products?search=nữ" className="btn-accent px-6 py-2.5 self-start text-xs">
-                  Khám phá
-                </Link>
+            </Link>
+          </motion.div>
+          <motion.div variants={fadeInUp}>
+            <Link to="/products?search=casual" className="group relative overflow-hidden aspect-[4/3] md:aspect-[3/2] block bg-gray-900">
+              <img
+                src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=800&q=80"
+                alt="Thời trang dạo phố"
+                className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 group-hover:opacity-60 transition-all duration-700"
+              />
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
+                <span className="text-white font-bold text-3xl md:text-4xl uppercase tracking-widest mb-4">Năng động</span>
+                <span className="text-sm font-medium text-white uppercase tracking-[0.3em] border border-white px-6 py-2 group-hover:bg-white group-hover:text-primary transition-colors">
+                  Phong cách dạo phố
+                </span>
               </div>
-            </div>
-          </div>
-        </div>
+            </Link>
+          </motion.div>
+        </motion.div>
       </section>
-    </div>
+    </motion.div>
   );
 }
