@@ -123,13 +123,19 @@ public class AuthService {
         if (kcUser == null) {
             throw new ResourceNotFoundException("User", "id", userId);
         }
+
+        List<String> roles = adminClient.getUserRealmRoles("Bearer " + adminToken, userId)
+                .stream()
+                .map(RoleRepresentation::name)
+                .collect(Collectors.toList());
+
         return UserInfoDTO.builder()
                 .id(kcUser.getId())
                 .email(kcUser.getEmail())
                 .firstName(kcUser.getFirstName())
                 .lastName(kcUser.getLastName())
                 .emailVerified(kcUser.isEmailVerified())
-                .roles(List.of()) // Roles fetched separately if needed
+                .roles(roles)
                 .build();
     }
 

@@ -70,5 +70,13 @@ public interface KeycloakAdminClient {
             @HeaderParam("Authorization") String bearerToken
     );
 
+    @GET
+    @Path("/users/{userId}/role-mappings/realm")
+    @Produces(MediaType.APPLICATION_JSON)
+    List<RoleRepresentation> getUserRealmRoles(
+            @HeaderParam("Authorization") String bearerToken,
+            @PathParam("userId") String userId
+    );
+
     record RoleRepresentation(String id, String name) {}
 }
