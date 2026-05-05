@@ -64,11 +64,12 @@ public class InventoryService {
 
     /**
      * Try to reserve stock for all items in an order.
-     * Saves StockReservation records for each item (used for compensation).
+     * Deducts from actual quantity immediately to prevent overselling.
+     * Saves StockReservation records for compensation (rollback on cancel).
      */
     @Transactional
     public StockReservedEvent reserveStock(OrderCreatedEvent event) {
-        // Phase 1: Validate all items
+        // Phase 1: Validate all items first (fail-fast, no partial deduction)
         for (OrderCreatedEvent.OrderItemEvent item : event.getItems()) {
             var optInv = inventoryRepository.findByProductId(item.getProductId());
             if (optInv.isEmpty()) {
@@ -83,26 +84,30 @@ public class InventoryService {
                         .build();
             }
             Inventory inv = optInv.get();
-            if (inv.getAvailable() < item.getQuantity()) {
+            // Check available quantity (quantity already accounts for prior reservations)
+            if (inv.getQuantity() < item.getQuantity()) {
                 LOG.warnf("Insufficient stock for %s (%d available, %d requested) — order %s",
-                        item.getProductName(), inv.getAvailable(), item.getQuantity(), event.getOrderId());
+                        item.getProductName(), inv.getQuantity(), item.getQuantity(), event.getOrderId());
                 meterRegistry.counter("stock.reservation.failed", "reason", "insufficient").increment();
                 return StockReservedEvent.builder()
                         .orderId(event.getOrderId())
                         .userId(event.getUserId())
                         .success(false)
-                        .reason("Insufficient stock for " + item.getProductName())
+                        .reason("Insufficient stock for " + item.getProductName()
+                                + " (available: " + inv.getQuantity() + ", requested: " + item.getQuantity() + ")")
                         .totalAmount(event.getTotalAmount())
                         .build();
             }
         }
 
-        // Phase 2: Reserve + track
+        // Phase 2: Deduct quantity immediately + track reservation for rollback
         for (OrderCreatedEvent.OrderItemEvent item : event.getItems()) {
             Inventory inv = inventoryRepository.findByProductId(item.getProductId()).get();
+            // Deduct from actual quantity right away → prevents overselling
+            inv.setQuantity(inv.getQuantity() - item.getQuantity());
             inv.setReservedQuantity(inv.getReservedQuantity() + item.getQuantity());
 
-            // Save reservation record for compensation
+            // Save reservation record for compensation (rollback if order cancelled)
             stockReservationRepository.persist(
                     new StockReservation(event.getOrderId(), item.getProductId(), item.getQuantity()));
         }
@@ -118,15 +123,19 @@ public class InventoryService {
     }
 
     /**
-     * Compensation: release reserved stock when order is cancelled.
+     * Compensation: restore quantity when order is cancelled (rollback).
+     * Since we deduct quantity immediately on reserve, cancellation must add it back.
      */
     @Transactional
     public void releaseReservedStock(UUID orderId) {
         List<StockReservation> reservations = stockReservationRepository.findByOrderIdAndStatus(orderId, "RESERVED");
         for (StockReservation res : reservations) {
             inventoryRepository.findByProductId(res.getProductId()).ifPresent(inv -> {
+                // Restore quantity (reverse of immediate deduction)
+                inv.setQuantity(inv.getQuantity() + res.getQuantity());
+                // Clear reserved quantity
                 inv.setReservedQuantity(Math.max(0, inv.getReservedQuantity() - res.getQuantity()));
-                LOG.infof("Released %d units of %s for cancelled order %s",
+                LOG.infof("Restored %d units of %s for cancelled order %s",
                         res.getQuantity(), inv.getProductName(), orderId);
             });
             res.setStatus("RELEASED");
@@ -134,17 +143,17 @@ public class InventoryService {
     }
 
     /**
-     * Confirm reservations when order is confirmed (optional audit).
+     * Confirm reservations when order is confirmed.
+     * Quantity was already deducted at reservation time — just clear reservedQuantity.
      */
     @Transactional
     public void confirmReservation(UUID orderId) {
         List<StockReservation> reservations = stockReservationRepository.findByOrderIdAndStatus(orderId, "RESERVED");
         for (StockReservation res : reservations) {
-            // Deduct from actual quantity, release reserved
-            inventoryRepository.findByProductId(res.getProductId()).ifPresent(inv -> {
-                inv.setQuantity(inv.getQuantity() - res.getQuantity());
-                inv.setReservedQuantity(Math.max(0, inv.getReservedQuantity() - res.getQuantity()));
-            });
+            // Quantity already deducted — just clear the reservation tracking counter
+            inventoryRepository.findByProductId(res.getProductId()).ifPresent(inv ->
+                inv.setReservedQuantity(Math.max(0, inv.getReservedQuantity() - res.getQuantity()))
+            );
             res.setStatus("CONFIRMED");
         }
         LOG.infof("Reservations confirmed for order %s", orderId);
