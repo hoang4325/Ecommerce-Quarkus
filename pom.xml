@@ -14,18 +14,18 @@
     <description>Quarkus-based E-Commerce Microservices Platform</description>
 
     <modules>
-        <module>common-lib</module>
-        <module>product-service</module>
-        <module>cart-service</module>
-        <module>order-service</module>
+        <module>backend/common-lib</module>
+        <module>backend/product-service</module>
+        <module>backend/cart-service</module>
+        <module>backend/order-service</module>
         <!-- Phase 2 -->
-        <module>auth-service</module>
-        <module>api-gateway</module>
+        <module>backend/auth-service</module>
+        <module>backend/api-gateway</module>
         <!-- Phase 3 -->
-        <module>inventory-service</module>
-        <module>payment-service</module>
-        <module>notification-service</module>
-        <module>user-service</module>
+        <module>backend/inventory-service</module>
+        <module>backend/payment-service</module>
+        <module>backend/notification-service</module>
+        <module>backend/user-service</module>
     </modules>
 
     <properties>

@@ -48,12 +48,14 @@ async function scrapeAndSeed() {
   try {
     // We will hardcode a few known category URLs to Torano to ensure we get data
     // Torano has clean structures like /collections/ao-thun-nam
+    // Configuration for pagination
+    const MAX_PAGES_PER_CATEGORY = 3; 
     const targets = [
-      { name: 'Áo Polo Nam', url: 'https://torano.vn/collections/ao-polo-nam' },
-      { name: 'Áo Sơ Mi Nam', url: 'https://torano.vn/collections/ao-so-mi-nam' },
-      { name: 'Áo Thun Nam', url: 'https://torano.vn/collections/ao-thun-nam' },
-      { name: 'Quần Shorts Nam', url: 'https://torano.vn/collections/quan-short-nam' },
-      { name: 'Quần Kaki Nam', url: 'https://torano.vn/collections/quan-kaki-nam' }
+      { name: 'Áo Polo Nam', url: 'https://torano.vn/collections/ao-polo' },
+      { name: 'Áo Sơ Mi Nam', url: 'https://torano.vn/collections/ao-so-mi' },
+      { name: 'Áo Thun Nam', url: 'https://torano.vn/collections/ao-thun' },
+      { name: 'Quần Shorts Nam', url: 'https://torano.vn/collections/quan-short' },
+      { name: 'Quần Kaki Nam', url: 'https://torano.vn/collections/quan-kaki' }
     ];
 
     for (const target of targets) {
@@ -70,97 +72,115 @@ async function scrapeAndSeed() {
         categoryId = catRes.data.data.id;
         console.log(`Đã tạo Category trong DB với ID: ${categoryId}`);
       } catch (err) {
-        console.error(`❌ Lỗi tạo danh mục ${target.name}:`, err.response?.data?.message || err.message);
-        // Ignore if exists, or skip. To be safe, if we get 400 because name exists, we could fetch categories.
-        // Let's fetch all categories to find the ID if it failed.
+        // Fetch existing category if creation fails
         const allCats = await axios.get(`${API_URL}/categories`);
         const existing = allCats.data.data.find(c => c.name === target.name);
         if (existing) {
           categoryId = existing.id;
           console.log(`Danh mục đã tồn tại, dùng ID: ${categoryId}`);
         } else {
+          console.error(`❌ Bỏ qua danh mục ${target.name} do lỗi.`);
           continue;
         }
       }
 
-      // 2. Scrape Torano page
-      console.log(`Đang tải trang web: ${target.url}`);
-      await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      
-      const products = await page.evaluate(() => {
-        const items = [];
-        // Find elements that look like a price (contains ₫ or d or đ)
-        const allNodes = Array.from(document.querySelectorAll('*'));
-        const priceNodes = allNodes.filter(n => 
-          n.children.length === 0 && 
-          n.textContent.match(/[0-9,\.]+\s*(₫|đ|d|vnđ)/i)
-        );
-
-        priceNodes.forEach(priceNode => {
-          let container = null;
-          let curr = priceNode;
-          for(let i=0; i<6; i++) {
-            if (curr.parentElement) {
-              curr = curr.parentElement;
-              if (curr.querySelector('img') && (curr.querySelector('h3') || curr.querySelector('h2') || curr.querySelector('a'))) {
-                container = curr;
-              }
-            }
-          }
-
-          if (container) {
-            // find title
-            let titleStr = '';
-            const h3 = container.querySelector('h3, h2');
-            if (h3) titleStr = h3.innerText.trim();
-            else {
-              const a = container.querySelector('a[title]');
-              if (a) titleStr = a.getAttribute('title');
-            }
-            
-            const imgEl = container.querySelector('img');
-            const img = imgEl ? (imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || imgEl.getAttribute('data-lazyload')) : '';
-            
-            const priceStr = priceNode.textContent.trim();
-            
-            if (titleStr && titleStr.length > 3 && img && !items.find(i => i.name === titleStr)) {
-              items.push({ name: titleStr, price: priceStr, image: img });
-            }
-          }
-        });
-        return items;
-      });
-
-      console.log(`Đã tìm thấy ${products.length} sản phẩm trên Torano. Bắt đầu đẩy vào DB...`);
-
-      // 3. Post to our DB
-      let successCount = 0;
-      for (const p of products.slice(0, 10)) { // limit to 10 per category so we don't bombard the DB immediately
+      // 2. Iterate through pages
+      for (let pNum = 1; pNum <= MAX_PAGES_PER_CATEGORY; pNum++) {
+        const pageUrl = `${target.url}?page=${pNum}`;
+        console.log(`\n--- Đang cào dữ liệu Trang ${pNum}: ${pageUrl} ---`);
+        
         try {
-          let imageUrl = p.image;
-          if (imageUrl && imageUrl.startsWith('//')) imageUrl = 'https:' + imageUrl;
+          await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+          
+          const products = await page.evaluate(() => {
+            const items = [];
+            const allNodes = Array.from(document.querySelectorAll('*'));
+            const priceNodes = allNodes.filter(n => 
+              n.children.length === 0 && 
+              n.textContent.match(/[0-9,\.]+\s*(₫|đ|d|vnđ)/i)
+            );
 
-          await axios.post(`${API_URL}/products`, {
-            name: p.name,
-            slug: autoSlug(p.name) + '-' + Math.floor(Math.random()*1000), // ensure uniqueness
-            price: formatPrice(p.price) || 300000,
-            categoryId: categoryId,
-            imageUrl: imageUrl,
-            description: `Sản phẩm ${p.name} chuẩn phong cách. Nhập nguyên bản từ Torano.`
+            priceNodes.forEach(priceNode => {
+              let container = null;
+              let curr = priceNode;
+              for(let i=0; i<6; i++) {
+                if (curr.parentElement) {
+                  curr = curr.parentElement;
+                  if (curr.querySelector('img') && (curr.querySelector('h3') || curr.querySelector('h2') || curr.querySelector('a'))) {
+                    container = curr;
+                  }
+                }
+              }
+
+              if (container) {
+                let titleStr = '';
+                const h3 = container.querySelector('h3, h2');
+                if (h3) titleStr = h3.innerText.trim();
+                else {
+                  const a = container.querySelector('a[title]');
+                  if (a) titleStr = a.getAttribute('title');
+                }
+                
+                const imgEl = container.querySelector('img');
+                const img = imgEl ? (imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || imgEl.getAttribute('data-lazyload')) : '';
+                const priceStr = priceNode.textContent.trim();
+                
+                if (titleStr && titleStr.length > 3 && img && !items.find(i => i.name === titleStr)) {
+                  items.push({ name: titleStr, price: priceStr, image: img });
+                }
+              }
+            });
+            return items;
           });
-          successCount++;
-        } catch (err) {
-          console.error(`❌ Lỗi thêm SP ${p.name}:`, err.response?.data?.message || err.message);
+
+          if (products.length === 0) {
+            console.log(`Không tìm thấy sản phẩm ở trang ${pNum}. Kết thúc danh mục.`);
+            break;
+          }
+
+          console.log(`Tìm thấy ${products.length} sản phẩm. Đang đẩy vào DB...`);
+
+          // 3. Post to our DB in batches
+          const BATCH_SIZE = 5; 
+          let successCount = 0;
+
+          for (let i = 0; i < products.length; i += BATCH_SIZE) {
+            const batch = products.slice(i, i + BATCH_SIZE);
+            
+            await Promise.all(batch.map(async (p) => {
+              try {
+                let imageUrl = p.image;
+                if (imageUrl && imageUrl.startsWith('//')) imageUrl = 'https:' + imageUrl;
+
+                await axios.post(`${API_URL}/products`, {
+                  name: p.name,
+                  slug: autoSlug(p.name) + '-' + Math.floor(Math.random() * 1000000), 
+                  price: formatPrice(p.price) || 300000,
+                  categoryId: categoryId,
+                  imageUrl: imageUrl,
+                  description: `Sản phẩm ${p.name} chuẩn phong cách. Nhập nguyên bản từ Torano.`
+                });
+                successCount++;
+              } catch (err) {
+                // If it's a conflict or other error, log and continue
+              }
+            }));
+            process.stdout.write(`.`); // Simple progress indicator
+          }
+          console.log(`\n✅ Thành công ${successCount}/${products.length} sản phẩm trang ${pNum}.`);
+          
+        } catch (pageErr) {
+          console.error(`❌ Lỗi khi xử lý trang ${pNum}:`, pageErr.message);
+          break;
         }
       }
-      console.log(`✅ Đã thêm thành công ${successCount} sản phẩm.`);
     }
 
   } catch (error) {
-    console.error('Lỗi tổng quan:', error);
+    console.error('Lỗi nghiêm trọng:', error);
   } finally {
     await browser.close();
-    console.log('\nHoàn tất!');
+    console.log('\n>>> TOÀN BỘ QUÁ TRÌNH HOÀN TẤT <<<');
   }
 }
 

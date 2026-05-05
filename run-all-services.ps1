@@ -10,7 +10,7 @@ $services = @(
 )
 
 Write-Host "Building common-lib first..." -ForegroundColor Green
-mvn clean install -pl common-lib -am -DskipTests
+mvn clean install -pl backend/common-lib -am -DskipTests
 
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to build common-lib. Please check the errors above."
