@@ -6,6 +6,13 @@ export const inventoryApi = {
     return apiClient.get<ApiResponse<InventoryDTO[]>>('/api/inventory');
   },
 
+  /** Public endpoint — returns only available quantity, no auth needed */
+  getAvailable(productId: string) {
+    return apiClient.get<ApiResponse<{ productId: string; available: number }>>(
+      `/api/inventory/product/${productId}/available`
+    );
+  },
+
   getByProduct(productId: string) {
     return apiClient.get<ApiResponse<InventoryDTO>>(`/api/inventory/product/${productId}`);
   },
