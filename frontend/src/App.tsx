@@ -16,6 +16,7 @@ import OrderListPage from './pages/orders/OrderListPage';
 import OrderDetailPage from './pages/orders/OrderDetailPage';
 import ProfilePage from './pages/users/ProfilePage';
 import NotificationPage from './pages/notifications/NotificationPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminOrderListPage from './pages/admin/AdminOrderListPage';
 import AdminProductListPage from './pages/admin/AdminProductListPage';
 import AdminCategoryPage from './pages/admin/AdminCategoryPage';
@@ -50,6 +51,7 @@ export default function App() {
               </ProtectedRoute>
             }
           >
+            <Route path="/admin" element={<AdminDashboardPage />} />
             <Route path="/admin/orders" element={<AdminOrderListPage />} />
             <Route path="/admin/products" element={<AdminProductListPage />} />
             <Route path="/admin/categories" element={<AdminCategoryPage />} />

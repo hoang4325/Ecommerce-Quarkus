@@ -33,28 +33,30 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <div className="group relative bg-white">
-      {/* Image */}
-      <Link to={`/products/${product.id}`} className="block relative overflow-hidden aspect-[3/4] bg-surface">
-        {product.imageUrl ? (
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-100">
-            <ShoppingBag size={40} className="text-gray-300" />
-          </div>
-        )}
+      {/* Image Container */}
+      <div className="relative overflow-hidden aspect-[3/4] bg-surface block">
+        <Link to={`/products/${product.id}`} className="block w-full h-full">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <ShoppingBag size={40} className="text-gray-300" />
+            </div>
+          )}
+        </Link>
 
         {/* Overlay actions */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-end justify-center gap-2 p-3 opacity-0 group-hover:opacity-100">
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-300 flex items-end justify-center gap-2 p-3 opacity-0 group-hover:opacity-100 pointer-events-none">
           {isAuthenticated() && (
             <button
               onClick={handleAddToCart}
               disabled={adding}
-              className="flex-1 bg-white text-primary text-xs font-semibold uppercase tracking-wide py-2.5 hover:bg-primary hover:text-white transition-colors duration-200 flex items-center justify-center gap-1.5"
+              className="flex-1 bg-white text-primary text-xs font-semibold uppercase tracking-wide py-2.5 hover:bg-primary hover:text-white transition-colors duration-200 flex items-center justify-center gap-1.5 pointer-events-auto"
             >
               <ShoppingBag size={14} />
               {adding ? 'Đang thêm...' : 'Thêm vào giỏ'}
@@ -62,12 +64,12 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
           <Link
             to={`/products/${product.id}`}
-            className="bg-white p-2.5 hover:bg-primary hover:text-white transition-colors duration-200"
+            className="bg-white p-2.5 hover:bg-primary hover:text-white transition-colors duration-200 pointer-events-auto flex items-center justify-center"
           >
             <Eye size={14} />
           </Link>
         </div>
-      </Link>
+      </div>
 
       {/* Info */}
       <div className="pt-3 pb-1">

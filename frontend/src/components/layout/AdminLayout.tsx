@@ -4,6 +4,7 @@ import { LayoutDashboard, Package, Tag, ShoppingCart, Warehouse, CreditCard, Che
 import clsx from 'clsx';
 
 const navItems = [
+  { to: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
   { to: '/admin/orders', label: 'Đơn hàng', icon: ShoppingCart },
   { to: '/admin/products', label: 'Sản phẩm', icon: Package },
   { to: '/admin/categories', label: 'Danh mục', icon: Tag },

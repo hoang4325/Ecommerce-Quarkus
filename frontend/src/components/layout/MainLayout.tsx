@@ -15,7 +15,7 @@ import {
   CreditCardOutlined,
   DatabaseOutlined,
 } from '@ant-design/icons';
-import { authStore } from '../../auth/authStore';
+import { useAuthStore } from '../../auth/authStore';
 import { notificationApi } from '../../api/endpoints/notificationApi';
 import { useQuery } from '@tanstack/react-query';
 
@@ -27,6 +27,8 @@ const MainLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, isAdmin, logout } = useAuthStore();
+  const isAdminUser = isAdmin();
 
   const { data: unreadData } = useQuery({
     queryKey: ['notifications', 'unread'],
@@ -55,7 +57,7 @@ const MainLayout = () => {
       icon: <LogoutOutlined />,
       label: 'Logout',
       onClick: () => {
-        authStore.logout();
+        logout();
         navigate('/login');
       },
     },
@@ -85,7 +87,7 @@ const MainLayout = () => {
       },
     ];
 
-    if (authStore.isAdmin) {
+    if (isAdminUser) {
       items.push({
         key: '/admin',
         icon: <AppstoreOutlined />,
@@ -179,7 +181,7 @@ const MainLayout = () => {
           <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
             <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Avatar icon={<UserOutlined />} />
-              <span>{authStore.user?.firstName || 'User'}</span>
+              <span>{user?.firstName || 'User'}</span>
             </div>
           </Dropdown>
         </Header>
