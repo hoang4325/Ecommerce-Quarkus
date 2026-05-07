@@ -36,8 +36,9 @@ public class ProductGatewayResource {
             @Context HttpHeaders headers,
             @QueryParam("page") @DefaultValue("0") Integer page,
             @QueryParam("size") @DefaultValue("10") Integer size,
-            @QueryParam("search") String search) {
-        return productServiceProxy.getProducts(authHeader(headers), page, size, search);
+            @QueryParam("search") String search,
+            @QueryParam("categoryId") String categoryId) {
+        return productServiceProxy.getProducts(authHeader(headers), page, size, search, categoryId);
     }
 
     @GET

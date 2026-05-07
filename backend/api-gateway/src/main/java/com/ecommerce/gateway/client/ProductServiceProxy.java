@@ -20,7 +20,8 @@ public interface ProductServiceProxy {
             @HeaderParam("Authorization") String auth,
             @QueryParam("page") Integer page,
             @QueryParam("size") Integer size,
-            @QueryParam("search") String search
+            @QueryParam("search") String search,
+            @QueryParam("categoryId") String categoryId
     );
 
     @GET
