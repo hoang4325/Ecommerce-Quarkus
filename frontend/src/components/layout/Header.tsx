@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, ShoppingBag, Menu, X, ChevronDown, Bell } from 'lucide-react';
+import { Search, User, ShoppingCart, Menu, X, ChevronDown, Bell } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore } from '../../auth/authStore';
 import { authService } from '../../auth/authService';
@@ -67,27 +67,35 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="bg-white border-b border-border sticky top-0 z-40 shadow-sm">
+    <header className="bg-white sticky top-0 z-40">
       <div className="container-shop">
-        <div className="flex items-center h-16 gap-4">
+        <div className="flex items-center h-[72px] gap-4">
           {/* Logo */}
-          <Link to="/" className="flex-shrink-0 font-black text-2xl tracking-tight text-primary">
-            VELORA
+          <Link to="/" className="flex-shrink-0 text-[28px] font-black tracking-[-0.03em] text-primary">
+            SHOP.CO
           </Link>
 
-          {/* Search — desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-4">
+          {/* Category nav — desktop */}
+          <nav className="hidden lg:flex items-center gap-6 text-sm text-primary">
+            <Link to="/products" className="inline-flex items-center gap-1.5 transition-colors hover:text-black/60">
+              Shop <ChevronDown size={14} />
+            </Link>
+            <Link to="/products?sort=sale" className="transition-colors hover:text-black/60">On Sale</Link>
+            <Link to="/products?sort=new" className="transition-colors hover:text-black/60">New Arrivals</Link>
+            <Link to="/products?brands=all" className="transition-colors hover:text-black/60">Brands</Link>
+          </nav>
+
+          {/* Search - desktop */}
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 mx-2">
             <div className="relative w-full">
+              <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Tìm kiếm sản phẩm..."
-                className="w-full border border-border pl-4 pr-10 py-2.5 text-sm focus:outline-none focus:border-primary transition-colors"
+                placeholder="Search for products..."
+                className="w-full rounded-full bg-[#F0F0F0] py-3 pl-12 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10"
               />
-              <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary">
-                <Search size={16} />
-              </button>
             </div>
           </form>
 
@@ -152,7 +160,7 @@ export default function Header() {
 
             {/* Cart */}
             <Link to="/cart" className="relative p-2 hover:text-accent transition-colors">
-              <ShoppingBag size={20} />
+              <ShoppingCart size={20} />
               <AnimatePresence>
                 {cartCount > 0 && (
                   <motion.span 
@@ -186,20 +194,6 @@ export default function Header() {
             </button>
           </div>
         </div>
-
-        {/* Category nav — desktop */}
-        <nav className="hidden md:flex items-center justify-center gap-8 h-12 border-t border-border overflow-x-auto whitespace-nowrap px-4">
-          <Link to="/products" className="relative group text-sm font-semibold hover:text-accent transition-colors uppercase tracking-wider">
-            Tất cả sản phẩm
-            <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300"></span>
-          </Link>
-          {categories.slice(0, 6).map((cat) => (
-            <Link key={cat.id} to={`/products?category=${cat.id}`} className="relative group text-sm font-semibold hover:text-accent transition-colors uppercase tracking-wider">
-              {cat.name}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-accent group-hover:w-full transition-all duration-300"></span>
-            </Link>
-          ))}
-        </nav>
 
         {/* Mobile overlay */}
         <AnimatePresence>

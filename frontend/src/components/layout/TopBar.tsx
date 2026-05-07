@@ -1,25 +1,23 @@
 import { Link } from 'react-router-dom';
-import { Phone, Clock } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function TopBar() {
   return (
     <div className="bg-primary text-white text-xs">
-      <div className="container-shop flex items-center justify-between h-9">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <Phone size={11} />
-            <span>Hotline: 1800 123 456</span>
-          </span>
-          <span className="hidden sm:flex items-center gap-1.5">
-            <Clock size={11} />
-            <span>Thứ 2 - Thứ 7: 8:00 - 22:00 | CN: 9:00 - 21:00</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-4 text-gray-300">
-          <Link to="/notifications" className="hover:text-white transition-colors">Thông báo</Link>
-          <span className="hidden sm:inline">|</span>
-          <Link to="/orders" className="hidden sm:inline hover:text-white transition-colors">Đơn hàng</Link>
-        </div>
+      <div className="container-shop relative flex h-9 items-center justify-center">
+        <p className="text-center text-[11px] sm:text-xs">
+          Sign up and get 20% off to your first order.{' '}
+          <Link to="/register" className="font-semibold underline underline-offset-2">
+            Sign Up Now
+          </Link>
+        </p>
+        <button
+          type="button"
+          aria-label="Dismiss promotion"
+          className="absolute right-4 hidden text-white/90 transition-colors hover:text-white sm:inline-flex"
+        >
+          <X size={16} />
+        </button>
       </div>
     </div>
   );
