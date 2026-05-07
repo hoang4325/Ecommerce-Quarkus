@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, ChevronRight, SlidersHorizontal, Star, X } from 'lucide-react';
@@ -346,15 +346,9 @@ export default function ProductListPage() {
   const page = parseInt(searchParams.get('page') ?? '0');
   const search = searchParams.get('search') ?? '';
   const categoryId = searchParams.get('category') ?? '';
-  const [selectedSize, setSelectedSize] = useState(searchParams.get('size') ?? 'Large');
-  const [selectedColor, setSelectedColor] = useState(searchParams.get('color') ?? '#063AF5');
-  const [selectedStyle, setSelectedStyle] = useState(searchParams.get('style') ?? '');
-
-  useEffect(() => {
-    setSelectedSize(searchParams.get('size') ?? 'Large');
-    setSelectedColor(searchParams.get('color') ?? '#063AF5');
-    setSelectedStyle(searchParams.get('style') ?? '');
-  }, [searchParams]);
+  const selectedSize = searchParams.get('size') ?? 'Large';
+  const selectedColor = searchParams.get('color') ?? '#063AF5';
+  const selectedStyle = searchParams.get('style') ?? '';
 
   const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', page, PAGE_SIZE, search, categoryId],
@@ -377,7 +371,7 @@ export default function ProductListPage() {
     staleTime: 300000,
   });
 
-  const categories: CategoryDTO[] = categoriesData ?? [];
+  const categories = useMemo(() => categoriesData ?? [], [categoriesData]);
   const apiProducts = productsData?.content ?? [];
   const products = apiProducts.length ? apiProducts : FALLBACK_PRODUCTS;
   const totalPages = productsData?.totalPages ?? 1;

@@ -177,8 +177,10 @@ export default function CartPage() {
     setPromoApplied(!!promoCode.trim());
   };
 
-  const items = cartData?.items ?? [];
-  const displayItems = items.length ? items : cartData ? [] : DEMO_ITEMS;
+  const items = useMemo(() => cartData?.items ?? [], [cartData]);
+  const displayItems = useMemo(() => {
+    return items.length ? items : cartData ? [] : DEMO_ITEMS;
+  }, [items, cartData]);
 
   const subtotal = useMemo(() => {
     return displayItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
