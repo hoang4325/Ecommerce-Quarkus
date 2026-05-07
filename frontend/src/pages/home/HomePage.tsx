@@ -1,46 +1,269 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Truck, RotateCcw, CreditCard, Headphones } from 'lucide-react';
+import { ArrowRight, CheckCircle, Star } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { productApi, categoryApi } from '../../api/endpoints/productApi';
-import ProductCard from '../../components/product/ProductCard';
-import ProductGrid from '../../components/product/ProductGrid';
-import { SkeletonCard } from '../../components/ui/LoadingSpinner';
-import type { ProductDTO, CategoryDTO } from '../../types';
+import { productApi } from '../../api/endpoints/productApi';
+import type { ProductDTO } from '../../types';
 
-const FEATURES = [
-  { icon: Truck, title: 'Miễn phí vận chuyển', desc: 'Đơn hàng từ 500.000đ' },
-  { icon: RotateCcw, title: 'Đổi hàng dễ dàng', desc: 'Trong vòng 30 ngày' },
-  { icon: CreditCard, title: 'Thanh toán đa dạng', desc: 'COD, Thẻ, VNPay, Momo' },
-  { icon: Headphones, title: 'Hỗ trợ nhanh', desc: 'Tư vấn 24/7' },
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop';
+
+const STATS = [
+  { value: '200+', label: 'International Brands' },
+  { value: '2,000+', label: 'High-Quality Products' },
+  { value: '30,000+', label: 'Happy Customers' },
 ];
 
-const CATEGORY_IMAGES = [
-  'https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=500&q=80',
-  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&q=80',
-  'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&q=80',
-  'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=500&q=80',
-  'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&q=80',
-  'https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=500&q=80',
+const BRAND_LOGOS = ['VERSACE', 'ZARA', 'GUCCI', 'PRADA', 'Calvin Klein'];
+
+const FALLBACK_PRODUCTS: ProductDTO[] = [
+  {
+    id: 'figma-1',
+    name: 'T-shirt with Tape Details',
+    slug: 't-shirt-with-tape-details',
+    description: '',
+    price: 1200000,
+    imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'tshirts',
+    categoryName: 'T-shirts',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'figma-2',
+    name: 'Skinny Fit Jeans',
+    slug: 'skinny-fit-jeans',
+    description: '',
+    price: 2400000,
+    imageUrl: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'jeans',
+    categoryName: 'Jeans',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'figma-3',
+    name: 'Checkered Shirt',
+    slug: 'checkered-shirt',
+    description: '',
+    price: 1800000,
+    imageUrl: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'shirts',
+    categoryName: 'Shirts',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'figma-4',
+    name: 'Sleeve Striped T-shirt',
+    slug: 'sleeve-striped-t-shirt',
+    description: '',
+    price: 1300000,
+    imageUrl: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'tshirts',
+    categoryName: 'T-shirts',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'figma-5',
+    name: 'Vertical Striped Shirt',
+    slug: 'vertical-striped-shirt',
+    description: '',
+    price: 2120000,
+    imageUrl: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'shirts',
+    categoryName: 'Shirts',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'figma-6',
+    name: 'Courage Graphic T-shirt',
+    slug: 'courage-graphic-t-shirt',
+    description: '',
+    price: 1450000,
+    imageUrl: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'tshirts',
+    categoryName: 'T-shirts',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'figma-7',
+    name: 'Loose Fit Bermuda Shorts',
+    slug: 'loose-fit-bermuda-shorts',
+    description: '',
+    price: 800000,
+    imageUrl: 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'shorts',
+    categoryName: 'Shorts',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+  {
+    id: 'figma-8',
+    name: 'Faded Skinny Jeans',
+    slug: 'faded-skinny-jeans',
+    description: '',
+    price: 2100000,
+    imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=700&auto=format&fit=crop',
+    categoryId: 'jeans',
+    categoryName: 'Jeans',
+    active: true,
+    createdAt: '',
+    updatedAt: '',
+  },
+];
+
+const DRESS_STYLES = [
+  {
+    name: 'Casual',
+    query: 'casual',
+    image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?q=80&w=900&auto=format&fit=crop',
+    wide: false,
+  },
+  {
+    name: 'Formal',
+    query: 'formal',
+    image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=1100&auto=format&fit=crop',
+    wide: true,
+  },
+  {
+    name: 'Party',
+    query: 'party',
+    image: 'https://images.unsplash.com/photo-1506629905607-d9bf04a9fbb8?q=80&w=1100&auto=format&fit=crop',
+    wide: true,
+  },
+  {
+    name: 'Gym',
+    query: 'gym',
+    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=900&auto=format&fit=crop',
+    wide: false,
+  },
+];
+
+const REVIEWS = [
+  {
+    name: 'Sarah M.',
+    text: "I'm blown away by the quality and style of the clothes I received from SHOP.CO. Every piece feels thoughtfully made and easy to wear.",
+  },
+  {
+    name: 'Alex K.',
+    text: "Finding clothes that align with my personal style used to be a challenge. This store made the whole experience simple and sharp.",
+  },
+  {
+    name: 'James L.',
+    text: "The range is impressive, from casual essentials to smart pieces. I always find something that fits the exact mood I want.",
+  },
 ];
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" as const } }
+  hidden: { opacity: 0, y: 28 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.65, ease: 'easeOut' as const } },
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15
-    }
-  }
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
+function formatPrice(price: number) {
+  return `$${Math.round(price / 10000)}`;
+}
+
+function Rating({ value = 4.5 }: { value?: number }) {
+  return (
+    <div className="flex items-center gap-1 text-[#FFC633]">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <Star key={index} size={18} fill="currentColor" className={index + 1 > Math.ceil(value) ? 'opacity-30' : ''} />
+      ))}
+      <span className="ml-2 text-sm text-primary">{value}/5</span>
+    </div>
+  );
+}
+
+function ShopProductCard({ product, index }: { product: ProductDTO; index: number }) {
+  const oldPrice = index % 3 === 1 ? Math.round(product.price * 1.25) : null;
+  const discount = oldPrice ? Math.round(((oldPrice - product.price) / oldPrice) * 100) : null;
+
+  return (
+    <motion.article variants={fadeInUp} className="group">
+      <Link to={`/products/${product.id}`} className="block">
+        <div className="aspect-square overflow-hidden rounded-lg bg-[#F0EEED]">
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+        <h3 className="mt-4 line-clamp-2 min-h-[48px] text-lg font-bold leading-6 text-primary">{product.name}</h3>
+      </Link>
+      <div className="mt-2">
+        <Rating value={index % 2 === 0 ? 4.5 : 4.0} />
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <span className="text-2xl font-bold text-primary">{formatPrice(product.price)}</span>
+        {oldPrice && <span className="text-2xl font-bold text-black/40 line-through">{formatPrice(oldPrice)}</span>}
+        {discount && (
+          <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-500">-{discount}%</span>
+        )}
+      </div>
+    </motion.article>
+  );
+}
+
+function ProductSection({
+  title,
+  products,
+}: {
+  title: string;
+  products: ProductDTO[];
+}) {
+  return (
+    <section className="container-shop border-b border-black/10 py-16 last:border-0">
+      <motion.h2
+        variants={fadeInUp}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-80px' }}
+        className="text-center text-4xl font-black leading-tight text-primary md:text-5xl"
+      >
+        {title}
+      </motion.h2>
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-80px' }}
+        className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4"
+      >
+        {products.map((product, index) => (
+          <ShopProductCard key={`${title}-${product.id}`} product={product} index={index} />
+        ))}
+      </motion.div>
+      <div className="mt-9 flex justify-center">
+        <Link
+          to="/products"
+          className="inline-flex h-[52px] min-w-[218px] items-center justify-center rounded-full border border-black/10 px-8 text-sm font-medium transition-colors hover:border-primary"
+        >
+          View All
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
-  const { data: productsData, isLoading: loadingProducts } = useQuery({
+  const { data: productsData, isLoading } = useQuery({
     queryKey: ['products', 0, 8, ''],
     queryFn: async () => {
       const res = await productApi.list({ page: 0, size: 8 });
@@ -49,199 +272,152 @@ export default function HomePage() {
     staleTime: 60000,
   });
 
-  const { data: categoriesData } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const res = await categoryApi.list();
-      return res.data.data as CategoryDTO[];
-    },
-    staleTime: 300000,
-  });
-
-  const products: ProductDTO[] = productsData?.content ?? [];
-  const categories: CategoryDTO[] = categoriesData ?? [];
+  const apiProducts: ProductDTO[] = productsData?.content ?? [];
+  const products = apiProducts.length >= 4 ? apiProducts : FALLBACK_PRODUCTS;
+  const newArrivals = products.slice(0, 4);
+  const topSelling = products.slice(4, 8).length === 4 ? products.slice(4, 8) : FALLBACK_PRODUCTS.slice(4, 8);
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      {/* Hero Banner */}
-      <section className="relative bg-primary overflow-hidden h-[80vh] min-h-[600px] flex items-center">
-        <motion.div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-50"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=1920&auto=format&fit=crop')" }}
-          initial={{ scale: 1.1 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
-        <motion.div
-          className="relative container-shop flex flex-col items-start justify-center w-full"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.span variants={fadeInUp} className="text-accent text-sm font-bold uppercase tracking-[0.4em] mb-4">Bộ sưu tập Xuân Hè 2026</motion.span>
-          <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-black text-white leading-[1.1] tracking-tighter mb-6 max-w-2xl">
-            PHONG CÁCH <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-500">ĐÀN ÔNG</span>
-          </motion.h1>
-          <motion.p variants={fadeInUp} className="text-gray-300 text-lg md:text-xl mb-10 max-w-md leading-relaxed font-light">
-            Sự kết hợp hoàn hảo giữa nét lịch lãm cổ điển và sự năng động của thời trang đương đại.
-          </motion.p>
-          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4">
-            <Link to="/products" className="bg-white text-primary px-10 py-4 text-sm font-bold uppercase tracking-widest hover:bg-gray-200 transition-colors">
-              Mua ngay
-            </Link>
-            <Link to="/products?search=bộ+sưu+tập" className="border border-white text-white px-10 py-4 text-sm font-bold uppercase tracking-widest hover:bg-white hover:text-primary transition-colors flex items-center justify-center">
-              Khám phá <ArrowRight size={16} className="ml-2" />
-            </Link>
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Feature strip */}
-      <section className="border-b border-border bg-white">
-        <div className="container-shop">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.45 }}>
+      <section className="relative overflow-hidden bg-[#F2F0F1]">
+        <div className="container-shop grid min-h-[520px] items-center gap-8 py-10 md:grid-cols-[0.95fr_1.05fr] md:py-0">
           <motion.div
-            className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-border"
+            className="relative z-10 max-w-[610px]"
             variants={staggerContainer}
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            animate="visible"
           >
-            {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <motion.div variants={fadeInUp} key={title} className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4 py-8 px-4">
-                <div className="w-12 h-12 rounded-full bg-surface flex items-center justify-center flex-shrink-0">
-                  <Icon size={24} className="text-primary" />
+            <motion.h1 variants={fadeInUp} className="max-w-[580px] text-[42px] font-black leading-[0.95] tracking-normal text-primary sm:text-6xl lg:text-[64px]">
+              FIND CLOTHES
+              <br />
+              THAT MATCHES
+              <br />
+              YOUR STYLE
+            </motion.h1>
+            <motion.p variants={fadeInUp} className="mt-6 max-w-[545px] text-sm leading-6 text-black/60">
+              Browse through our diverse range of meticulously crafted garments, designed
+              to bring out your individuality and cater to your sense of style.
+            </motion.p>
+            <motion.div variants={fadeInUp}>
+              <Link to="/products" className="mt-7 inline-flex h-[52px] min-w-[210px] items-center justify-center rounded-full bg-primary px-9 py-4 text-sm font-semibold text-white transition-colors hover:bg-black/80">
+                Shop Now
+              </Link>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="mt-10 grid max-w-[610px] grid-cols-3 divide-x divide-black/10">
+              {STATS.map((item) => (
+                <div key={item.label} className="px-4 first:pl-0">
+                  <p className="text-2xl font-bold leading-none text-primary sm:text-[40px]">{item.value}</p>
+                  <p className="mt-2 text-xs text-black/60 sm:text-base">{item.label}</p>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-primary uppercase tracking-wide mb-1">{title}</p>
-                  <p className="text-xs text-muted font-medium">{desc}</p>
-                </div>
-              </motion.div>
-            ))}
+              ))}
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="relative min-h-[390px] self-end md:min-h-[520px]"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+          >
+            <img
+              src={HERO_IMAGE}
+              alt="Fashion models wearing contemporary streetwear"
+              className="absolute bottom-0 left-1/2 h-full w-[115%] max-w-none -translate-x-1/2 object-cover object-[50%_20%] mix-blend-multiply md:w-full"
+            />
+            <span className="absolute right-[8%] top-[12%] h-20 w-20 rotate-45 bg-primary [clip-path:polygon(50%_0,62%_38%,100%_50%,62%_62%,50%_100%,38%_62%,0_50%,38%_38%)] md:h-24 md:w-24" />
+            <span className="absolute left-[8%] top-[42%] h-10 w-10 rotate-45 bg-primary [clip-path:polygon(50%_0,62%_38%,100%_50%,62%_62%,50%_100%,38%_62%,0_50%,38%_38%)] md:h-12 md:w-12" />
           </motion.div>
         </div>
       </section>
 
-      {/* Featured Categories */}
-      {categories.length > 0 && (
-        <section className="container-shop py-20">
-          <motion.div
-            className="text-center mb-12"
+      <section className="bg-primary">
+        <div className="container-shop flex min-h-[92px] flex-wrap items-center justify-center gap-x-14 gap-y-5 py-5 text-white lg:justify-between">
+          {BRAND_LOGOS.map((brand) => (
+            <span key={brand} className="font-serif text-2xl font-bold leading-none tracking-tight sm:text-3xl lg:text-[34px]">
+              {brand}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {isLoading ? (
+        <section className="container-shop py-16">
+          <div className="h-[420px] animate-pulse rounded-lg bg-[#F0EEED]" />
+        </section>
+      ) : (
+        <>
+          <ProductSection title="NEW ARRIVALS" products={newArrivals} />
+          <ProductSection title="TOP SELLING" products={topSelling} />
+        </>
+      )}
+
+      <section className="container-shop py-16">
+        <div className="rounded-lg bg-[#F0F0F0] px-6 py-10 md:px-16 md:py-16">
+          <motion.h2
+            variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInUp}
+            viewport={{ once: true, margin: '-80px' }}
+            className="text-center text-4xl font-black leading-tight text-primary md:text-5xl"
           >
-            <h2 className="text-3xl font-black text-primary uppercase tracking-widest">Danh mục nổi bật</h2>
-            <div className="w-16 h-1 bg-accent mx-auto mt-4"></div>
-          </motion.div>
-
+            BROWSE BY DRESS STYLE
+          </motion.h2>
           <motion.div
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
+            viewport={{ once: true, margin: '-80px' }}
+            className="mt-10 grid auto-rows-[190px] grid-cols-1 gap-5 md:grid-cols-3 lg:auto-rows-[250px]"
           >
-            {categories.slice(0, 6).map((cat, index) => (
-              <motion.div variants={fadeInUp} key={cat.id}>
+            {DRESS_STYLES.map((style) => (
+              <motion.div key={style.name} variants={fadeInUp} className={style.wide ? 'md:col-span-2' : ''}>
                 <Link
-                  to={`/products?category=${cat.id}`}
-                  className="group relative block aspect-[3/4] overflow-hidden bg-gray-100 h-full"
+                  to={`/products?search=${style.query}`}
+                  className="group relative block h-full overflow-hidden rounded-lg bg-white"
                 >
                   <img
-                    src={CATEGORY_IMAGES[index % CATEGORY_IMAGES.length]}
-                    alt={cat.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    src={style.image}
+                    alt={`${style.name} style`}
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    loading="lazy"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
-                    <span className="text-white font-bold text-sm uppercase tracking-widest text-center group-hover:text-accent transition-colors">
-                      {cat.name}
-                    </span>
-                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/45 to-transparent" />
+                  <span className="relative z-10 block p-8 text-3xl font-bold text-primary">{style.name}</span>
                 </Link>
               </motion.div>
             ))}
           </motion.div>
-        </section>
-      )}
-
-      {/* New Arrivals */}
-      <section className="bg-surface py-20">
-        <div className="container-shop">
-          <motion.div
-            className="flex flex-col md:flex-row items-center justify-between mb-12 gap-6"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={fadeInUp}
-          >
-            <div>
-              <h2 className="text-3xl font-black text-primary uppercase tracking-widest">Sản phẩm mới</h2>
-              <div className="w-16 h-1 bg-accent mt-4"></div>
-            </div>
-            <Link to="/products" className="text-sm font-bold text-primary hover:text-accent transition-colors uppercase tracking-widest flex items-center gap-2 border-b-2 border-primary hover:border-accent pb-1">
-              Xem tất cả <ArrowRight size={16} />
-            </Link>
-          </motion.div>
-
-          {loadingProducts ? (
-            <ProductGrid cols={4}>
-              {Array(8).fill(0).map((_, i) => <SkeletonCard key={i} />)}
-            </ProductGrid>
-          ) : (
-            <ProductGrid cols={4}>
-              {products.map((p) => <ProductCard key={p.id} product={p} />)}
-            </ProductGrid>
-          )}
         </div>
       </section>
 
-      {/* Mid Banners */}
-      <section className="container-shop py-20">
+      <section className="container-shop pb-20">
+        <div className="flex items-end justify-between gap-6">
+          <h2 className="text-4xl font-black leading-tight text-primary md:text-5xl">OUR HAPPY CUSTOMERS</h2>
+          <Link to="/products" className="hidden items-center gap-2 text-sm font-semibold md:inline-flex">
+            Shop collection <ArrowRight size={18} />
+          </Link>
+        </div>
         <motion.div
-          className="grid md:grid-cols-2 gap-6"
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: '-80px' }}
+          className="mt-10 grid gap-5 md:grid-cols-3"
         >
-          <motion.div variants={fadeInUp}>
-            <Link to="/products?search=công+sở" className="group relative overflow-hidden aspect-[4/3] md:aspect-[3/2] block bg-gray-900">
-              <img
-                src="https://images.unsplash.com/photo-1603252109303-2751441dd157?w=800&q=80"
-                alt="Thời trang công sở"
-                className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 group-hover:opacity-60 transition-all duration-700"
-              />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                <span className="text-white font-bold text-3xl md:text-4xl uppercase tracking-widest mb-4">Lịch lãm</span>
-                <span className="text-sm font-medium text-white uppercase tracking-[0.3em] border border-white px-6 py-2 group-hover:bg-white group-hover:text-primary transition-colors">
-                  Thời trang công sở
-                </span>
+          {REVIEWS.map((review) => (
+            <motion.article key={review.name} variants={fadeInUp} className="rounded-lg border border-black/10 bg-white p-7">
+              <div className="flex gap-1 text-[#FFC633]">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <Star key={index} size={20} fill="currentColor" />
+                ))}
               </div>
-            </Link>
-          </motion.div>
-          <motion.div variants={fadeInUp}>
-            <Link to="/products?search=casual" className="group relative overflow-hidden aspect-[4/3] md:aspect-[3/2] block bg-gray-900">
-              <img
-                src="https://images.unsplash.com/photo-1516257984-b1b4d707412e?w=800&q=80"
-                alt="Thời trang dạo phố"
-                className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:scale-105 group-hover:opacity-60 transition-all duration-700"
-              />
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-8">
-                <span className="text-white font-bold text-3xl md:text-4xl uppercase tracking-widest mb-4">Năng động</span>
-                <span className="text-sm font-medium text-white uppercase tracking-[0.3em] border border-white px-6 py-2 group-hover:bg-white group-hover:text-primary transition-colors">
-                  Phong cách dạo phố
-                </span>
-              </div>
-            </Link>
-          </motion.div>
+              <h3 className="mt-4 flex items-center gap-1 text-xl font-bold text-primary">
+                {review.name}
+                <CheckCircle size={18} fill="#01AB31" className="text-white" />
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-black/60">{review.text}</p>
+            </motion.article>
+          ))}
         </motion.div>
       </section>
     </motion.div>
