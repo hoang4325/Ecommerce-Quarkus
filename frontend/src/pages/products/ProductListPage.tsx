@@ -10,125 +10,7 @@ import type { CategoryDTO, ProductDTO } from '../../types';
 
 const PAGE_SIZE = 9;
 
-const FALLBACK_PRODUCTS: ProductDTO[] = [
-  {
-    id: 'listing-1',
-    name: 'Gradient Graphic T-shirt',
-    slug: 'gradient-graphic-t-shirt',
-    description: '',
-    price: 1450000,
-    imageUrl: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'tshirts',
-    categoryName: 'T-shirts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-2',
-    name: 'Polo with Tipping Details',
-    slug: 'polo-with-tipping-details',
-    description: '',
-    price: 1800000,
-    imageUrl: 'https://images.unsplash.com/photo-1622445275576-721325763afe?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'shirts',
-    categoryName: 'Shirts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-3',
-    name: 'Black Striped T-shirt',
-    slug: 'black-striped-t-shirt',
-    description: '',
-    price: 1200000,
-    imageUrl: 'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'tshirts',
-    categoryName: 'T-shirts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-4',
-    name: 'Skinny Fit Jeans',
-    slug: 'skinny-fit-jeans',
-    description: '',
-    price: 2400000,
-    imageUrl: 'https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'jeans',
-    categoryName: 'Jeans',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-5',
-    name: 'Checkered Shirt',
-    slug: 'checkered-shirt',
-    description: '',
-    price: 1800000,
-    imageUrl: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'shirts',
-    categoryName: 'Shirts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-6',
-    name: 'Sleeve Striped T-shirt',
-    slug: 'sleeve-striped-t-shirt',
-    description: '',
-    price: 1300000,
-    imageUrl: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'tshirts',
-    categoryName: 'T-shirts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-7',
-    name: 'Vertical Striped Shirt',
-    slug: 'vertical-striped-shirt',
-    description: '',
-    price: 2120000,
-    imageUrl: 'https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'shirts',
-    categoryName: 'Shirts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-8',
-    name: 'Courage Graphic T-shirt',
-    slug: 'courage-graphic-t-shirt',
-    description: '',
-    price: 1450000,
-    imageUrl: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'tshirts',
-    categoryName: 'T-shirts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-  {
-    id: 'listing-9',
-    name: 'Loose Fit Bermuda Shorts',
-    slug: 'loose-fit-bermuda-shorts',
-    description: '',
-    price: 800000,
-    imageUrl: 'https://images.unsplash.com/photo-1591195853828-11db59a44f6b?q=80&w=700&auto=format&fit=crop',
-    categoryId: 'shorts',
-    categoryName: 'Shorts',
-    active: true,
-    createdAt: '',
-    updatedAt: '',
-  },
-];
+const FALLBACK_PRODUCTS: ProductDTO[] = [];
 
 const DEFAULT_CATEGORIES = ['T-shirts', 'Shorts', 'Shirts', 'Hoodie', 'Jeans'];
 const COLORS = ['#00C12B', '#F50606', '#F5DD06', '#F57906', '#06CAF5', '#063AF5', '#7D06F5', '#F506A4', '#FFFFFF', '#000000'];
@@ -346,16 +228,19 @@ export default function ProductListPage() {
   const page = parseInt(searchParams.get('page') ?? '0');
   const search = searchParams.get('search') ?? '';
   const categoryId = searchParams.get('category') ?? '';
-  const selectedSize = searchParams.get('size') ?? 'Large';
-  const selectedColor = searchParams.get('color') ?? '#063AF5';
+  const selectedSize = searchParams.get('size') ?? '';
+  const selectedColor = searchParams.get('color') ?? '';
   const selectedStyle = searchParams.get('style') ?? '';
 
   const { data: productsData, isLoading } = useQuery({
-    queryKey: ['products', page, PAGE_SIZE, search, categoryId],
+    queryKey: ['products', page, PAGE_SIZE, search, categoryId, selectedSize, selectedColor, selectedStyle],
     queryFn: async () => {
       const params: Record<string, string | number> = { page, size: PAGE_SIZE };
       if (search) params.search = search;
       if (categoryId) params.categoryId = categoryId;
+      if (selectedSize) params.productSize = selectedSize;
+      if (selectedColor) params.color = selectedColor;
+      if (selectedStyle) params.dressStyle = selectedStyle;
       const res = await productApi.list(params);
       return res.data.data;
     },

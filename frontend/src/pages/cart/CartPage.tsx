@@ -15,32 +15,7 @@ const CART_IMAGES = [
   'https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=400&auto=format&fit=crop',
 ];
 
-const DEMO_ITEMS: CartItemDTO[] = [
-  {
-    id: 'demo-cart-1',
-    productId: 'listing-1',
-    productName: 'Gradient Graphic T-shirt',
-    price: 1450000,
-    quantity: 1,
-    subtotal: 1450000,
-  },
-  {
-    id: 'demo-cart-2',
-    productId: 'listing-5',
-    productName: 'Checkered Shirt',
-    price: 1800000,
-    quantity: 1,
-    subtotal: 1800000,
-  },
-  {
-    id: 'demo-cart-3',
-    productId: 'listing-4',
-    productName: 'Skinny Fit Jeans',
-    price: 2400000,
-    quantity: 1,
-    subtotal: 2400000,
-  },
-];
+const DEMO_ITEMS: CartItemDTO[] = [];
 
 function formatPrice(price: number) {
   return `$${Math.round(price / 10000)}`;
