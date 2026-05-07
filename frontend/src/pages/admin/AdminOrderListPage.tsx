@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-
+import { Filter } from 'lucide-react';
 import { orderAdminApi } from '../../api/endpoints/orderApi';
 import StatusBadge from '../../components/ui/StatusBadge';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
@@ -10,6 +10,7 @@ import type { OrderDTO } from '../../types';
 
 const STATUS_OPTIONS = Object.values(OrderStatus);
 const PAGE_SIZE = 20;
+const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
 
 export default function AdminOrderListPage() {
   const [page, setPage] = useState(0);
@@ -25,9 +26,6 @@ export default function AdminOrderListPage() {
     },
   });
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
-
   const updateStatus = async (id: string, status: string) => {
     setUpdatingId(id);
     try {
@@ -42,64 +40,67 @@ export default function AdminOrderListPage() {
   const totalPages = data?.totalPages ?? 0;
 
   return (
-    <div>
-      {/* Filters */}
-      <div className="flex items-center gap-4 mb-6">
-        <select
-          value={statusFilter}
-          onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
-          className="border border-border px-4 py-2.5 text-sm focus:outline-none focus:border-primary"
-        >
-          <option value="">Tất cả trạng thái</option>
-          {STATUS_OPTIONS.map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-        <span className="text-sm text-muted">
-          {isLoading ? '...' : `${data?.totalElements ?? 0} đơn hàng`}
-        </span>
-      </div>
+    <div className="space-y-6">
+      <section className="rounded-lg border border-black/10 bg-white p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-primary">Order Management</h2>
+            <p className="mt-1 text-sm text-black/50">{isLoading ? 'Loading orders...' : `${data?.totalElements ?? 0} orders in this view`}</p>
+          </div>
+          <label className="flex w-full items-center gap-2 rounded-full bg-[#F0F0F0] px-4 md:w-auto">
+            <Filter size={17} className="text-black/40" />
+            <select
+              value={statusFilter}
+              onChange={e => { setStatusFilter(e.target.value); setPage(0); }}
+              className="h-11 bg-transparent text-sm text-primary focus:outline-none"
+            >
+              <option value="">All statuses</option>
+              {STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+            </select>
+          </label>
+        </div>
+      </section>
 
       {isLoading ? (
         <LoadingSpinner />
       ) : (
-        <div className="bg-white border border-border overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-surface text-xs uppercase tracking-widest text-muted">
-                <th className="text-left px-4 py-3">ID</th>
-                <th className="text-left px-4 py-3">Ngày đặt</th>
-                <th className="text-left px-4 py-3">Khách hàng</th>
-                <th className="text-right px-4 py-3">Tổng tiền</th>
-                <th className="text-center px-4 py-3">Trạng thái</th>
-                <th className="text-center px-4 py-3">Hành động</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {orders.map(order => (
-                <tr key={order.id} className="hover:bg-surface transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-muted">{order.id.slice(0, 8).toUpperCase()}</td>
-                  <td className="px-4 py-3 text-xs">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
-                  <td className="px-4 py-3 text-xs text-muted">{order.userId?.slice(0, 8)}...</td>
-                  <td className="px-4 py-3 text-right font-bold text-accent">{formatPrice(order.totalAmount)}</td>
-                  <td className="px-4 py-3 text-center"><StatusBadge status={order.status} /></td>
-                  <td className="px-4 py-3 text-center">
-                    <select
-                      value={order.status}
-                      disabled={updatingId === order.id || order.status === 'CONFIRMED' || order.status === 'CANCELLED'}
-                      onChange={e => updateStatus(order.id, e.target.value)}
-                      className="text-xs border border-border px-2 py-1 focus:outline-none focus:border-primary disabled:opacity-50"
-                    >
-                      {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </td>
+        <div className="overflow-hidden rounded-lg border border-black/10 bg-white">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-[#F7F7F7] text-xs uppercase tracking-[0.18em] text-black/45">
+                <tr>
+                  <th className="px-5 py-4 text-left">Order</th>
+                  <th className="px-5 py-4 text-left">Date</th>
+                  <th className="px-5 py-4 text-left">Customer</th>
+                  <th className="px-5 py-4 text-right">Total</th>
+                  <th className="px-5 py-4 text-center">Status</th>
+                  <th className="px-5 py-4 text-center">Update</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {orders.length === 0 && (
-            <div className="text-center py-12 text-muted text-sm">Không có đơn hàng nào</div>
-          )}
+              </thead>
+              <tbody className="divide-y divide-black/10">
+                {orders.map(order => (
+                  <tr key={order.id} className="hover:bg-[#F7F7F7]">
+                    <td className="px-5 py-4 font-mono text-xs font-bold text-primary">#{order.id.slice(0, 8).toUpperCase()}</td>
+                    <td className="px-5 py-4 text-xs text-black/60">{new Date(order.createdAt).toLocaleDateString('en-US', { dateStyle: 'medium' })}</td>
+                    <td className="px-5 py-4 text-xs text-black/60">{order.userId?.slice(0, 8)}...</td>
+                    <td className="px-5 py-4 text-right font-bold text-primary">{formatPrice(order.totalAmount)}</td>
+                    <td className="px-5 py-4 text-center"><StatusBadge status={order.status} /></td>
+                    <td className="px-5 py-4 text-center">
+                      <select
+                        value={order.status}
+                        disabled={updatingId === order.id || order.status === 'CONFIRMED' || order.status === 'CANCELLED'}
+                        onChange={e => updateStatus(order.id, e.target.value)}
+                        className="rounded-full border border-black/10 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-black/10 disabled:opacity-50"
+                      >
+                        {STATUS_OPTIONS.map(status => <option key={status} value={status}>{status}</option>)}
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {orders.length === 0 && <div className="py-12 text-center text-sm text-black/50">No orders found.</div>}
+          </div>
         </div>
       )}
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

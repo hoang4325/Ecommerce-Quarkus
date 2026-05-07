@@ -1,71 +1,62 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import {
+  Activity,
+  ArrowRight,
+  CreditCard,
+  DollarSign,
+  Package,
+  ShoppingCart,
+  Tag,
+  Users,
+  Warehouse,
+} from 'lucide-react';
 import { orderAdminApi } from '../../api/endpoints/orderApi';
 import { productApi, categoryApi } from '../../api/endpoints/productApi';
-import { 
-  DollarSign, 
-  Package, 
-  ShoppingCart, 
-  TrendingUp, 
-  Users, 
-  Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  Tag
-} from 'lucide-react';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
-const StatCard = ({ title, value, icon: Icon, trend, trendValue, colorClass }: {
+const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
+
+const StatCard = ({ title, value, icon: Icon, helper }: {
   title: string;
   value: string | number;
   icon: React.ElementType;
-  trend?: 'up' | 'down';
-  trendValue?: string;
-  colorClass: string;
+  helper: string;
 }) => (
-  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-    <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full opacity-10 ${colorClass}`}></div>
-    <div className="flex justify-between items-start relative z-10">
+  <div className="rounded-lg border border-black/10 bg-white p-6">
+    <div className="flex items-start justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
-        <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
+        <p className="text-sm font-medium text-black/50">{title}</p>
+        <h3 className="mt-3 text-3xl font-black text-primary">{value}</h3>
+        <p className="mt-2 text-xs text-black/45">{helper}</p>
       </div>
-      <div className={`p-3 rounded-xl ${colorClass}`}>
-        <Icon size={24} className="text-white" />
-      </div>
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-white">
+        <Icon size={20} />
+      </span>
     </div>
-    
-    {trend && (
-      <div className="mt-4 flex items-center gap-2 text-sm">
-        <span className={`flex items-center ${trend === 'up' ? 'text-emerald-500' : 'text-rose-500'} font-medium`}>
-          {trend === 'up' ? <ArrowUpRight size={16} /> : <ArrowDownRight size={16} />}
-          {trendValue}
-        </span>
-        <span className="text-gray-400">vs tháng trước</span>
-      </div>
-    )}
   </div>
 );
 
 export default function AdminDashboardPage() {
   const { data: ordersData, isLoading: isLoadingOrders } = useQuery({
     queryKey: ['admin-orders', { page: 0, size: 100 }],
-    queryFn: () => orderAdminApi.list({ page: 0, size: 100 }).then(r => r.data.data)
+    queryFn: () => orderAdminApi.list({ page: 0, size: 100 }).then(r => r.data.data),
   });
 
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['admin-products', { page: 0, size: 1 }],
-    queryFn: () => productApi.list({ page: 0, size: 1 }).then(r => r.data.data)
+    queryFn: () => productApi.list({ page: 0, size: 1 }).then(r => r.data.data),
   });
 
   const { data: categoriesData, isLoading: isLoadingCategories } = useQuery({
     queryKey: ['admin-categories'],
-    queryFn: () => categoryApi.list().then(r => r.data.data)
+    queryFn: () => categoryApi.list().then(r => r.data.data),
   });
 
   if (isLoadingOrders || isLoadingProducts || isLoadingCategories) {
     return (
-      <div className="flex justify-center items-center h-full">
+      <div className="flex h-[55vh] items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -75,94 +66,64 @@ export default function AdminDashboardPage() {
   const totalOrders = ordersData?.totalElements || 0;
   const totalProducts = productsData?.totalElements || 0;
   const totalCategories = categoriesData?.length || 0;
-
-  // Calculate total revenue from confirmed/completed orders
-  const revenue = orders
-    .filter(o => o.status !== 'CANCELLED')
-    .reduce((sum, o) => sum + o.totalAmount, 0);
-
-  const pendingOrders = orders.filter(o => o.status === 'PENDING').length;
+  const revenue = orders.filter(o => o.status !== 'CANCELLED').reduce((sum, o) => sum + o.totalAmount, 0);
+  const pendingOrders = orders.filter(o => o.status === 'PENDING');
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Tổng quan hệ thống</h1>
-          <p className="text-gray-500 mt-1">Theo dõi hoạt động kinh doanh và hiệu suất cửa hàng</p>
-        </div>
-        <div className="flex gap-3">
-          <button className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">
-            <Activity size={16} />
-            Báo cáo chi tiết
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Tổng doanh thu" 
-          value={`$${revenue.toFixed(2)}`}
-          icon={DollarSign}
-          trend="up"
-          trendValue="+12.5%"
-          colorClass="bg-emerald-500"
-        />
-        <StatCard 
-          title="Tổng đơn hàng" 
-          value={totalOrders}
-          icon={ShoppingCart}
-          trend="up"
-          trendValue="+5.2%"
-          colorClass="bg-blue-500"
-        />
-        <StatCard 
-          title="Sản phẩm" 
-          value={totalProducts}
-          icon={Package}
-          colorClass="bg-indigo-500"
-        />
-        <StatCard 
-          title="Khách hàng" 
-          value="1,248"
-          icon={Users}
-          trend="up"
-          trendValue="+18.2%"
-          colorClass="bg-violet-500"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Orders Chart / Table placeholder */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-semibold text-lg text-gray-900">Đơn hàng cần xử lý ({pendingOrders})</h3>
-            <button className="text-sm font-medium text-blue-600 hover:text-blue-700">Xem tất cả</button>
+      <section className="rounded-lg bg-primary p-6 text-white lg:p-8">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-[0.24em] text-white/45">Operations overview</p>
+            <h2 className="mt-3 text-4xl font-black leading-tight md:text-5xl">STORE DASHBOARD</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-white/65">
+              Monitor catalog health, pending orders, inventory readiness, and payment activity from one workspace.
+            </p>
           </div>
-          
+          <Link to="/admin/orders" className="inline-flex h-12 w-fit items-center gap-2 rounded-full bg-white px-6 text-sm font-medium text-primary">
+            Review orders <ArrowRight size={17} />
+          </Link>
+        </div>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard title="Revenue" value={formatPrice(revenue)} icon={DollarSign} helper="Non-cancelled orders" />
+        <StatCard title="Orders" value={totalOrders} icon={ShoppingCart} helper={`${pendingOrders.length} pending`} />
+        <StatCard title="Products" value={totalProducts} icon={Package} helper="Published catalog items" />
+        <StatCard title="Categories" value={totalCategories} icon={Tag} helper="Active merchandising groups" />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="rounded-lg border border-black/10 bg-white">
+          <div className="flex items-center justify-between border-b border-black/10 p-5">
+            <div>
+              <h3 className="text-xl font-bold text-primary">Pending Orders</h3>
+              <p className="mt-1 text-sm text-black/50">Orders that need an operational action.</p>
+            </div>
+            <Link to="/admin/orders" className="text-sm font-medium text-primary underline underline-offset-4">View all</Link>
+          </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs text-gray-500 uppercase bg-gray-50/50">
+            <table className="w-full text-sm">
+              <thead className="bg-[#F7F7F7] text-xs uppercase tracking-[0.18em] text-black/45">
                 <tr>
-                  <th className="px-4 py-3 rounded-tl-lg">Mã đơn</th>
-                  <th className="px-4 py-3">Khách hàng</th>
-                  <th className="px-4 py-3">Ngày đặt</th>
-                  <th className="px-4 py-3 text-right rounded-tr-lg">Giá trị</th>
+                  <th className="px-5 py-4 text-left">Order</th>
+                  <th className="px-5 py-4 text-left">Customer</th>
+                  <th className="px-5 py-4 text-left">Date</th>
+                  <th className="px-5 py-4 text-right">Total</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
-                {orders.filter(o => o.status === 'PENDING').slice(0, 5).map(order => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">#{order.id.slice(-6).toUpperCase()}</td>
-                    <td className="px-4 py-3">{order.userId.slice(0, 8)}...</td>
-                    <td className="px-4 py-3 text-gray-500">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">${order.totalAmount.toFixed(2)}</td>
+              <tbody className="divide-y divide-black/10">
+                {pendingOrders.slice(0, 6).map(order => (
+                  <tr key={order.id} className="hover:bg-[#F7F7F7]">
+                    <td className="px-5 py-4 font-mono text-xs font-bold text-primary">#{order.id.slice(0, 8).toUpperCase()}</td>
+                    <td className="px-5 py-4 text-black/60">{order.userId.slice(0, 8)}...</td>
+                    <td className="px-5 py-4 text-black/60">{new Date(order.createdAt).toLocaleDateString('en-US', { dateStyle: 'medium' })}</td>
+                    <td className="px-5 py-4 text-right font-bold text-primary">{formatPrice(order.totalAmount)}</td>
                   </tr>
                 ))}
-                {pendingOrders === 0 && (
+                {pendingOrders.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                      Không có đơn hàng nào đang chờ xử lý
-                    </td>
+                    <td colSpan={4} className="px-5 py-12 text-center text-sm text-black/50">No pending orders.</td>
                   </tr>
                 )}
               </tbody>
@@ -170,58 +131,28 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        {/* Quick Stats or Categories */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-          <h3 className="font-semibold text-lg text-gray-900 mb-6">Trạng thái hệ thống</h3>
-          
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-                <Tag size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-500 font-medium">Danh mục sản phẩm</p>
-                <div className="flex items-end justify-between mt-1">
-                  <span className="text-xl font-bold text-gray-900">{totalCategories}</span>
-                  <span className="text-xs text-emerald-500 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">Đang hoạt động</span>
+        <div className="rounded-lg border border-black/10 bg-white p-6">
+          <h3 className="text-xl font-bold text-primary">System Snapshot</h3>
+          <div className="mt-6 space-y-4">
+            {[
+              { icon: Warehouse, label: 'Inventory', value: 'Operational' },
+              { icon: CreditCard, label: 'Payments', value: 'Connected' },
+              { icon: Users, label: 'Customers', value: 'Active' },
+              { icon: Activity, label: 'API Health', value: 'Stable' },
+            ].map(({ icon: Icon, label, value }) => (
+              <div key={label} className="flex items-center gap-4 rounded-lg bg-[#F7F7F7] p-4">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
+                  <Icon size={18} />
+                </span>
+                <div>
+                  <p className="text-sm font-medium text-black/50">{label}</p>
+                  <p className="mt-0.5 font-bold text-primary">{value}</p>
                 </div>
               </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-orange-50 text-orange-600 rounded-xl">
-                <TrendingUp size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-500 font-medium">Tỷ lệ chuyển đổi</p>
-                <div className="flex items-end justify-between mt-1">
-                  <span className="text-xl font-bold text-gray-900">3.8%</span>
-                  <span className="text-xs text-emerald-500 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">+0.4%</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
-                <Activity size={20} />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm text-gray-500 font-medium">Sức khỏe Server</p>
-                <div className="flex items-end justify-between mt-1">
-                  <span className="text-xl font-bold text-gray-900">Tốt</span>
-                  <span className="text-xs text-emerald-500 font-medium bg-emerald-50 px-2 py-0.5 rounded-full">99.9% Uptime</span>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-8 pt-6 border-t border-gray-100">
-            <button className="w-full py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-lg text-sm font-medium transition-colors">
-              Kiểm tra toàn bộ hệ thống
-            </button>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
