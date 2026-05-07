@@ -12,20 +12,20 @@ import type { CartItemDTO } from '../../types';
 const PAYMENT_METHODS = [
   {
     id: 'card',
-    title: 'Credit / Debit Card',
+    title: 'Thẻ tín dụng / Ghi nợ',
     desc: 'Visa, Mastercard, JCB',
     icon: CreditCard,
   },
   {
     id: 'bank',
-    title: 'Bank Transfer',
-    desc: 'Manual transfer after order creation',
+    title: 'Chuyển khoản ngân hàng',
+    desc: 'Chuyển khoản thủ công sau khi tạo đơn hàng',
     icon: Landmark,
   },
   {
     id: 'cod',
-    title: 'Cash on Delivery',
-    desc: 'Pay when your package arrives',
+    title: 'Thanh toán khi nhận hàng',
+    desc: 'Thanh toán khi nhận được hàng',
     icon: Truck,
   },
 ];
@@ -93,7 +93,7 @@ export default function CheckoutPage() {
           message="Giỏ hàng của bạn đang trống"
           action={
             <Link to="/products" className="inline-flex rounded-full bg-primary px-8 py-3 text-sm font-medium text-white">
-              Continue Shopping
+              Tiếp tục mua sắm
             </Link>
           }
         />
@@ -105,23 +105,23 @@ export default function CheckoutPage() {
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
       <div className="container-shop border-t border-black/10 py-6">
         <nav className="flex items-center gap-2 text-sm text-black/60">
-          <Link to="/" className="transition-colors hover:text-primary">Home</Link>
+          <Link to="/" className="transition-colors hover:text-primary">Trang chủ</Link>
           <ChevronRight size={16} />
-          <Link to="/cart" className="transition-colors hover:text-primary">Cart</Link>
+          <Link to="/cart" className="transition-colors hover:text-primary">Giỏ hàng</Link>
           <ChevronRight size={16} />
-          <span className="font-medium text-primary">Payment</span>
+          <span className="font-medium text-primary">Thanh toán</span>
         </nav>
 
         <div className="mt-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h1 className="text-[40px] font-black leading-tight text-primary md:text-[48px]">PAYMENT</h1>
+            <h1 className="text-[40px] font-black leading-tight text-primary md:text-[48px]">THANH TOÁN</h1>
             <p className="mt-2 max-w-xl text-sm leading-6 text-black/60">
-              Complete your shipping details and choose how you want to pay for this order.
+              Hoàn tất thông tin giao hàng và chọn phương thức thanh toán cho đơn hàng này.
             </p>
           </div>
           <div className="inline-flex w-fit items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
             <ShieldCheck size={17} />
-            Secure checkout
+            Thanh toán an toàn
           </div>
         </div>
 
@@ -133,26 +133,26 @@ export default function CheckoutPage() {
                   <MapPin size={20} />
                 </span>
                 <div>
-                  <h2 className="text-2xl font-bold text-primary">Shipping Address</h2>
-                  <p className="text-sm text-black/60">Where should we deliver your order?</p>
+                  <h2 className="text-2xl font-bold text-primary">Địa chỉ giao hàng</h2>
+                  <p className="text-sm text-black/60">Chúng tôi nên giao đơn hàng của bạn đến đâu?</p>
                 </div>
               </div>
 
               <label htmlFor="shippingAddress" className="mt-6 block text-sm font-medium text-primary">
-                Delivery address <span className="text-red-500">*</span>
+                Địa chỉ giao hàng <span className="text-red-500">*</span>
               </label>
               <textarea
                 id="shippingAddress"
                 value={shippingAddress}
                 onChange={e => setShippingAddress(e.target.value)}
                 rows={5}
-                placeholder="House number, street, ward, district, city..."
+                placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố..."
                 className="mt-2 w-full resize-none rounded-lg bg-[#F0F0F0] px-4 py-4 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10"
                 required
               />
 
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                {['Standard delivery', '2-5 business days', 'Tracking included'].map((item) => (
+                {['Giao hàng tiêu chuẩn', '2-5 ngày làm việc', 'Bao gồm theo dõi đơn hàng'].map((item) => (
                   <div key={item} className="rounded-lg bg-[#F7F7F7] px-4 py-3 text-sm font-medium text-black/60">
                     {item}
                   </div>
@@ -166,8 +166,8 @@ export default function CheckoutPage() {
                   <CreditCard size={20} />
                 </span>
                 <div>
-                  <h2 className="text-2xl font-bold text-primary">Payment Method</h2>
-                  <p className="text-sm text-black/60">Select a payment option for this checkout.</p>
+                  <h2 className="text-2xl font-bold text-primary">Phương thức thanh toán</h2>
+                  <p className="text-sm text-black/60">Chọn phương thức thanh toán cho đơn hàng này.</p>
                 </div>
               </div>
 
@@ -198,7 +198,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mt-5 rounded-lg bg-[#F0F0F0] p-4 text-sm leading-6 text-black/60">
-                Payment records are created after the order is placed. You can review status from your order detail page.
+                Hồ sơ thanh toán sẽ được tạo sau khi đơn hàng được đặt. Bạn có thể xem trạng thái từ trang chi tiết đơn hàng của mình.
               </div>
             </div>
 
@@ -210,7 +210,7 @@ export default function CheckoutPage() {
           </section>
 
           <aside className="h-fit rounded-lg border border-black/10 bg-white p-5 md:p-6 lg:sticky lg:top-28">
-            <h2 className="text-2xl font-bold text-primary">Order Summary</h2>
+            <h2 className="text-2xl font-bold text-primary">Tóm tắt đơn hàng</h2>
             <div className="mt-6 divide-y divide-black/10">
               {items.map((item: CartItemDTO, index) => (
                 <div key={item.id} className="flex gap-4 py-4 first:pt-0">
@@ -226,7 +226,7 @@ export default function CheckoutPage() {
                     <Link to={`/products/${item.productId}`} className="line-clamp-2 text-sm font-bold text-primary">
                       {item.productName}
                     </Link>
-                    <p className="mt-1 text-xs text-black/60">Qty: {item.quantity}</p>
+                    <p className="mt-1 text-xs text-black/60">SL: {item.quantity}</p>
                     <p className="mt-2 text-base font-bold text-primary">{formatPrice(item.subtotal)}</p>
                   </div>
                 </div>
@@ -235,19 +235,19 @@ export default function CheckoutPage() {
 
             <div className="mt-2 space-y-4 border-t border-black/10 pt-5">
               <div className="flex items-center justify-between text-base">
-                <span className="text-black/60">Subtotal</span>
+                <span className="text-black/60">Tạm tính</span>
                 <span className="font-bold text-primary">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex items-center justify-between text-base">
-                <span className="text-black/60">Discount (-20%)</span>
+                <span className="text-black/60">Giảm giá (-20%)</span>
                 <span className="font-bold text-red-500">-{formatPrice(discount)}</span>
               </div>
               <div className="flex items-center justify-between text-base">
-                <span className="text-black/60">Delivery Fee</span>
+                <span className="text-black/60">Phí giao hàng</span>
                 <span className="font-bold text-primary">{formatPrice(deliveryFee)}</span>
               </div>
               <div className="flex items-center justify-between border-t border-black/10 pt-5">
-                <span className="text-xl text-primary">Total</span>
+                <span className="text-xl text-primary">Tổng cộng</span>
                 <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
               </div>
             </div>
@@ -257,12 +257,12 @@ export default function CheckoutPage() {
               disabled={submitting}
               className="mt-6 inline-flex h-[54px] w-full items-center justify-center gap-3 rounded-full bg-primary px-8 text-sm font-medium text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {submitting ? 'Processing...' : 'Place Order'}
+              {submitting ? 'Đang xử lý...' : 'Đặt hàng'}
               <ArrowRight size={18} />
             </button>
 
             <Link to="/cart" className="mt-4 inline-flex w-full justify-center text-sm font-medium text-black/60 underline underline-offset-4 transition-colors hover:text-primary">
-              Back to cart
+              Quay lại giỏ hàng
             </Link>
           </aside>
         </form>

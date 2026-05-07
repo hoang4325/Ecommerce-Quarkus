@@ -76,15 +76,15 @@ const SIZES = ['Small', 'Medium', 'Large', 'X-Large'];
 const REVIEWS = [
   {
     name: 'Sarah M.',
-    text: "The quality is better than I expected. The fabric feels substantial without being heavy, and the fit looks exactly like the product photos.",
+    text: "Chất lượng tốt hơn tôi mong đợi. Vải có cảm giác chắc chắn mà không quá nặng, và phom dáng giống hệt như trên ảnh sản phẩm.",
   },
   {
     name: 'Alex K.',
-    text: 'This piece works with almost everything in my wardrobe. It feels casual, but still polished enough to wear out.',
+    text: 'Món đồ này phù hợp với hầu hết mọi thứ trong tủ đồ của tôi. Nó mang lại cảm giác thoải mái, nhưng vẫn đủ lịch sự để mặc ra ngoài.',
   },
   {
     name: 'James L.',
-    text: 'Clean design, comfortable fit, and no awkward shrink after washing. I would absolutely buy another color.',
+    text: 'Thiết kế đơn giản, vừa vặn thoải mái, và không bị co rút sau khi giặt. Tôi chắc chắn sẽ mua thêm một màu khác.',
   },
 ];
 
@@ -205,17 +205,17 @@ export default function ProductDetailPage() {
   const handleAddToCart = async () => {
     if (!data) return;
     if (!isAuthenticated() && !fallbackProduct) {
-      setAddedMsg('Please sign in to add this product to your cart.');
+      setAddedMsg('Vui lòng đăng nhập để thêm sản phẩm này vào giỏ hàng.');
       setTimeout(() => setAddedMsg(''), 3000);
       return;
     }
     if (outOfStock) {
-      setAddedMsg('This product is out of stock.');
+      setAddedMsg('Sản phẩm này đã hết hàng.');
       setTimeout(() => setAddedMsg(''), 3000);
       return;
     }
     if (available !== null && quantity > available) {
-      setAddedMsg(`Only ${available} items are available.`);
+      setAddedMsg(`Chỉ còn ${available} sản phẩm.`);
       setTimeout(() => setAddedMsg(''), 3000);
       return;
     }
@@ -227,10 +227,10 @@ export default function ProductDetailPage() {
         queryClient.invalidateQueries({ queryKey: ['cart'] });
         queryClient.invalidateQueries({ queryKey: ['inventory-product', id] });
       }
-      setAddedMsg('Added to cart.');
+      setAddedMsg('Đã thêm vào giỏ hàng.');
       setTimeout(() => setAddedMsg(''), 3000);
     } catch {
-      setAddedMsg('Something went wrong. Please try again.');
+      setAddedMsg('Có lỗi xảy ra. Vui lòng thử lại.');
       setTimeout(() => setAddedMsg(''), 3000);
     } finally {
       setAdding(false);
@@ -241,9 +241,9 @@ export default function ProductDetailPage() {
   if (!data) {
     return (
       <div className="container-shop py-20 text-center">
-        <p className="text-black/60">Product not found</p>
+        <p className="text-black/60">Không tìm thấy sản phẩm</p>
         <Link to="/products" className="mt-6 inline-flex rounded-full border border-black/10 px-6 py-2.5 text-sm font-medium">
-          Back to shop
+          Quay lại cửa hàng
         </Link>
       </div>
     );
@@ -253,9 +253,9 @@ export default function ProductDetailPage() {
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
       <div className="container-shop border-t border-black/10 py-6">
         <nav className="flex items-center gap-2 text-sm text-black/60">
-          <Link to="/" className="transition-colors hover:text-primary">Home</Link>
+          <Link to="/" className="transition-colors hover:text-primary">Trang chủ</Link>
           <ChevronRight size={16} />
-          <Link to="/products" className="transition-colors hover:text-primary">Shop</Link>
+          <Link to="/products" className="transition-colors hover:text-primary">Sản phẩm</Link>
           {data.categoryName && (
             <>
               <ChevronRight size={16} />
@@ -298,13 +298,13 @@ export default function ProductDetailPage() {
               <span className="rounded-full bg-red-500/10 px-3.5 py-1.5 text-sm font-medium text-red-500">-40%</span>
             </div>
             <p className="mt-5 max-w-[590px] text-base leading-6 text-black/60">
-              {data.description || 'This product is crafted with comfort, quality, and everyday style in mind.'}
+              {data.description || 'Sản phẩm này được thiết kế hướng đến sự thoải mái, chất lượng và phong cách mặc hàng ngày.'}
             </p>
 
             <div className="my-6 h-px bg-black/10" />
 
             <div>
-              <p className="text-base text-black/60">Select Colors</p>
+              <p className="text-base text-black/60">Chọn màu sắc</p>
               <div className="mt-4 flex gap-4">
                 {COLORS.map((color) => (
                   <button
@@ -326,7 +326,7 @@ export default function ProductDetailPage() {
             <div className="my-6 h-px bg-black/10" />
 
             <div>
-              <p className="text-base text-black/60">Choose Size</p>
+              <p className="text-base text-black/60">Chọn kích cỡ</p>
               <div className="mt-4 flex flex-wrap gap-3">
                 {SIZES.map((size) => (
                   <button
@@ -374,12 +374,12 @@ export default function ProductDetailPage() {
                 className="inline-flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-primary px-8 text-sm font-medium text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShoppingCart size={18} />
-                {outOfStock ? 'Out of Stock' : adding ? 'Adding...' : 'Add to Cart'}
+                {outOfStock ? 'Hết hàng' : adding ? 'Đang thêm...' : 'Thêm vào giỏ'}
               </button>
             </div>
 
             {available !== null && available <= 10 && available > 0 && (
-              <p className="mt-3 text-sm font-medium text-orange-600">Only {available} left in stock.</p>
+              <p className="mt-3 text-sm font-medium text-orange-600">Chỉ còn {available} sản phẩm trong kho.</p>
             )}
 
             {addedMsg && (
@@ -400,7 +400,7 @@ export default function ProductDetailPage() {
 
         <section className="mt-20">
           <div className="grid grid-cols-3 border-b border-black/10 text-center text-base text-black/60">
-            {['Product Details', 'Rating & Reviews', 'FAQs'].map((tab, index) => (
+            {['Chi tiết sản phẩm', 'Đánh giá & Nhận xét', 'Câu hỏi thường gặp'].map((tab, index) => (
               <button
                 key={tab}
                 type="button"
@@ -413,11 +413,11 @@ export default function ProductDetailPage() {
 
           <div className="mt-8 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-primary">All Reviews</h2>
-              <p className="mt-1 text-sm text-black/60">451 verified reviews</p>
+              <h2 className="text-2xl font-bold text-primary">Tất cả nhận xét</h2>
+              <p className="mt-1 text-sm text-black/60">451 đánh giá đã xác minh</p>
             </div>
             <button type="button" className="h-12 rounded-full bg-primary px-8 text-sm font-medium text-white">
-              Write a Review
+              Viết nhận xét
             </button>
           </div>
 
@@ -430,14 +430,14 @@ export default function ProductDetailPage() {
                   <CheckCircle size={18} fill="#01AB31" className="text-white" />
                 </h3>
                 <p className="mt-3 text-sm leading-6 text-black/60">{review.text}</p>
-                <p className="mt-6 text-sm font-medium text-black/60">Posted on May 7, 2026</p>
+                <p className="mt-6 text-sm font-medium text-black/60">Đăng vào ngày 7 tháng 5, 2026</p>
               </article>
             ))}
           </div>
         </section>
 
         <section className="py-20">
-          <h2 className="text-center text-4xl font-black leading-tight text-primary md:text-5xl">YOU MIGHT ALSO LIKE</h2>
+          <h2 className="text-center text-4xl font-black leading-tight text-primary md:text-5xl">CÓ THỂ BẠN CŨNG THÍCH</h2>
           <div className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
             {relatedProducts.slice(0, 4).map((product, index) => (
               <RelatedProductCard key={product.id} product={product} index={index} />

@@ -57,9 +57,9 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <div className="container-shop border-t border-black/10 py-20 text-center">
-        <p className="text-black/60">Order not found</p>
+        <p className="text-black/60">Không tìm thấy đơn hàng</p>
         <Link to="/orders" className="mt-6 inline-flex rounded-full border border-black/10 px-6 py-2.5 text-sm font-medium">
-          Back to orders
+          Quay lại danh sách đơn
         </Link>
       </div>
     );
@@ -72,9 +72,9 @@ export default function OrderDetailPage() {
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
       <div className="container-shop border-t border-black/10 py-6">
         <nav className="flex items-center gap-2 text-sm text-black/60">
-          <Link to="/" className="transition-colors hover:text-primary">Home</Link>
+          <Link to="/" className="transition-colors hover:text-primary">Trang chủ</Link>
           <ChevronRight size={16} />
-          <Link to="/orders" className="transition-colors hover:text-primary">Orders</Link>
+          <Link to="/orders" className="transition-colors hover:text-primary">Đơn hàng</Link>
           <ChevronRight size={16} />
           <span className="font-medium text-primary">#{order.id.slice(0, 8).toUpperCase()}</span>
         </nav>
@@ -83,12 +83,12 @@ export default function OrderDetailPage() {
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-[34px] font-black leading-tight text-primary md:text-[44px]">
-                ORDER #{order.id.slice(0, 8).toUpperCase()}
+                ĐƠN HÀNG #{order.id.slice(0, 8).toUpperCase()}
               </h1>
               <StatusBadge status={order.status} />
             </div>
             <p className="mt-2 text-sm text-black/60">
-              Placed on {new Date(order.createdAt).toLocaleDateString('en-US', { dateStyle: 'long' })}
+              Đặt ngày {new Date(order.createdAt).toLocaleDateString('vi-VN', { dateStyle: 'long' })}
             </p>
           </div>
           {order.status === 'PENDING' && (
@@ -99,7 +99,7 @@ export default function OrderDetailPage() {
               className="inline-flex h-12 w-fit items-center justify-center gap-2 rounded-full bg-red-50 px-6 text-sm font-medium text-red-600 transition-colors hover:bg-red-100 disabled:opacity-50"
             >
               <XCircle size={18} />
-              {cancelling ? 'Cancelling...' : 'Cancel Order'}
+              {cancelling ? 'Đang huỷ...' : 'Huỷ đơn hàng'}
             </button>
           )}
         </div>
@@ -111,7 +111,7 @@ export default function OrderDetailPage() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
                   <ShoppingBag size={20} />
                 </span>
-                <h2 className="text-2xl font-bold text-primary">Ordered Items</h2>
+                <h2 className="text-2xl font-bold text-primary">Sản phẩm đã đặt</h2>
               </div>
               <div className="divide-y divide-black/10 px-5 md:px-6">
                 {order.items?.map((item, index) => (
@@ -123,7 +123,7 @@ export default function OrderDetailPage() {
                       <Link to={`/products/${item.productId}`} className="line-clamp-2 text-base font-bold text-primary">
                         {item.productName}
                       </Link>
-                      <p className="mt-1 text-sm text-black/60">Qty: {item.quantity} × {formatPrice(item.price)}</p>
+                      <p className="mt-1 text-sm text-black/60">SL: {item.quantity} × {formatPrice(item.price)}</p>
                       <p className="mt-3 text-xl font-bold text-primary">{formatPrice(item.subtotal)}</p>
                     </div>
                   </div>
@@ -137,22 +137,22 @@ export default function OrderDetailPage() {
                   <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
                     <CreditCard size={20} />
                   </span>
-                  <h2 className="text-2xl font-bold text-primary">Payment</h2>
+                  <h2 className="text-2xl font-bold text-primary">Thanh toán</h2>
                 </div>
                 <div className="mt-5 grid gap-4 text-sm md:grid-cols-3">
                   <div className="rounded-lg bg-[#F7F7F7] p-4">
-                    <p className="text-black/50">Status</p>
+                    <p className="text-black/50">Trạng thái</p>
                     <p className={`mt-1 font-bold ${payment.status === 'SUCCESS' ? 'text-green-600' : 'text-red-600'}`}>
-                      {payment.status === 'SUCCESS' ? 'Success' : 'Failed'}
+                      {payment.status === 'SUCCESS' ? 'Thành công' : 'Thất bại'}
                     </p>
                   </div>
                   <div className="rounded-lg bg-[#F7F7F7] p-4">
-                    <p className="text-black/50">Amount</p>
+                    <p className="text-black/50">Số tiền</p>
                     <p className="mt-1 font-bold text-primary">{formatPrice(payment.amount)}</p>
                   </div>
                   <div className="rounded-lg bg-[#F7F7F7] p-4">
-                    <p className="text-black/50">Transaction</p>
-                    <p className="mt-1 truncate font-mono text-xs text-primary">{payment.transactionId || 'Pending'}</p>
+                    <p className="text-black/50">Giao dịch</p>
+                    <p className="mt-1 truncate font-mono text-xs text-primary">{payment.transactionId || 'Đang chờ'}</p>
                   </div>
                 </div>
               </div>
@@ -165,23 +165,23 @@ export default function OrderDetailPage() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
                   <Package size={20} />
                 </span>
-                <h2 className="text-2xl font-bold text-primary">Summary</h2>
+                <h2 className="text-2xl font-bold text-primary">Tóm tắt</h2>
               </div>
               <div className="mt-6 space-y-4">
                 <div className="flex justify-between text-base">
-                  <span className="text-black/60">Subtotal</span>
+                  <span className="text-black/60">Tạm tính</span>
                   <span className="font-bold text-primary">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-base">
-                  <span className="text-black/60">Discount (-20%)</span>
+                  <span className="text-black/60">Giảm giá (-20%)</span>
                   <span className="font-bold text-red-500">-{formatPrice(discount)}</span>
                 </div>
                 <div className="flex justify-between text-base">
-                  <span className="text-black/60">Delivery Fee</span>
+                  <span className="text-black/60">Phí giao hàng</span>
                   <span className="font-bold text-primary">$0</span>
                 </div>
                 <div className="flex justify-between border-t border-black/10 pt-5">
-                  <span className="text-xl text-primary">Total</span>
+                  <span className="text-xl text-primary">Tổng cộng</span>
                   <span className="text-2xl font-bold text-primary">{formatPrice(order.totalAmount)}</span>
                 </div>
               </div>
@@ -192,7 +192,7 @@ export default function OrderDetailPage() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-white">
                   <Truck size={20} />
                 </span>
-                <h2 className="text-2xl font-bold text-primary">Delivery</h2>
+                <h2 className="text-2xl font-bold text-primary">Giao hàng</h2>
               </div>
               <div className="mt-5 flex items-start gap-3 rounded-lg bg-[#F7F7F7] p-4 text-sm leading-6 text-black/60">
                 <MapPin size={18} className="mt-1 shrink-0 text-primary" />

@@ -57,10 +57,10 @@ function CartLineItem({
               {item.productName}
             </Link>
             <p className="mt-1 text-xs text-primary md:text-sm">
-              Size: <span className="text-black/60">Large</span>
+              Kích cỡ: <span className="text-black/60">Large</span>
             </p>
             <p className="mt-1 text-xs text-primary md:text-sm">
-              Color: <span className="text-black/60">{index % 2 === 0 ? 'White' : 'Red'}</span>
+              Màu sắc: <span className="text-black/60">{index % 2 === 0 ? 'White' : 'Red'}</span>
             </p>
           </div>
           <button
@@ -171,21 +171,21 @@ export default function CartPage() {
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
       <div className="container-shop border-t border-black/10 py-6">
         <nav className="flex items-center gap-2 text-sm text-black/60">
-          <Link to="/" className="transition-colors hover:text-primary">Home</Link>
+          <Link to="/" className="transition-colors hover:text-primary">Trang chủ</Link>
           <ChevronRight size={16} />
-          <span className="font-medium text-primary">Cart</span>
+          <span className="font-medium text-primary">Giỏ hàng</span>
         </nav>
 
-        <h1 className="mt-6 text-[40px] font-black leading-tight text-primary md:text-[48px]">YOUR CART</h1>
+        <h1 className="mt-6 text-[40px] font-black leading-tight text-primary md:text-[48px]">GIỎ HÀNG CỦA BẠN</h1>
 
         {displayItems.length === 0 ? (
           <div className="py-16">
             <EmptyState
               icon={<ShoppingBag size={32} />}
-              message="Your cart is empty"
+              message="Giỏ hàng của bạn đang trống"
               action={
                 <Link to="/products" className="inline-flex rounded-full bg-primary px-8 py-3 text-sm font-medium text-white">
-                  Continue Shopping
+                  Tiếp tục mua sắm
                 </Link>
               }
             />
@@ -210,25 +210,25 @@ export default function CartPage() {
                   onClick={clearCart}
                   className="mb-6 text-sm font-medium text-black/50 underline underline-offset-4 transition-colors hover:text-red-500"
                 >
-                  Clear cart
+                  Xóa giỏ hàng
                 </button>
               )}
             </section>
 
             <aside className="h-fit rounded-lg border border-black/10 bg-white p-5 md:p-6">
-              <h2 className="text-2xl font-bold text-primary">Order Summary</h2>
+              <h2 className="text-2xl font-bold text-primary">Tóm tắt đơn hàng</h2>
 
               <div className="mt-6 space-y-5">
                 <div className="flex items-center justify-between text-xl">
-                  <span className="text-black/60">Subtotal</span>
+                  <span className="text-black/60">Tạm tính</span>
                   <span className="font-bold text-primary">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between text-xl">
-                  <span className="text-black/60">Discount (-20%)</span>
+                  <span className="text-black/60">Giảm giá (-20%)</span>
                   <span className="font-bold text-red-500">-{formatPrice(discount)}</span>
                 </div>
                 <div className="flex items-center justify-between text-xl">
-                  <span className="text-black/60">Delivery Fee</span>
+                  <span className="text-black/60">Phí giao hàng</span>
                   <span className="font-bold text-primary">{formatPrice(deliveryFee)}</span>
                 </div>
               </div>
@@ -236,7 +236,7 @@ export default function CartPage() {
               <div className="my-5 h-px bg-black/10" />
 
               <div className="flex items-center justify-between">
-                <span className="text-xl text-primary">Total</span>
+                <span className="text-xl text-primary">Tổng cộng</span>
                 <span className="text-2xl font-bold text-primary">{formatPrice(total)}</span>
               </div>
 
@@ -250,7 +250,7 @@ export default function CartPage() {
                       setPromoCode(event.target.value);
                       setPromoApplied(false);
                     }}
-                    placeholder="Add promo code"
+                    placeholder="Thêm mã giảm giá"
                     className="h-12 w-full rounded-full bg-[#F0F0F0] pl-12 pr-4 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10"
                   />
                 </div>
@@ -258,19 +258,19 @@ export default function CartPage() {
                   type="submit"
                   className="h-12 rounded-full bg-primary px-7 text-sm font-medium text-white transition-colors hover:bg-black/80"
                 >
-                  Apply
+                  Áp dụng
                 </button>
               </form>
 
               {promoApplied && (
-                <p className="mt-3 text-sm font-medium text-green-600">Promo code applied.</p>
+                <p className="mt-3 text-sm font-medium text-green-600">Đã áp dụng mã giảm giá.</p>
               )}
 
               <Link
                 to="/checkout"
                 className="mt-6 inline-flex h-[54px] w-full items-center justify-center gap-3 rounded-full bg-primary px-8 text-sm font-medium text-white transition-colors hover:bg-black/80"
               >
-                Go to Checkout
+                Thanh toán
                 <ArrowRight size={18} />
               </Link>
             </aside>

@@ -101,7 +101,7 @@ function FilterPanel({
   return (
     <div className="rounded-lg border border-black/10 bg-white p-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-primary">Filters</h2>
+        <h2 className="text-xl font-bold text-primary">Bộ lọc</h2>
         <SlidersHorizontal size={20} className="text-black/40" />
       </div>
 
@@ -127,7 +127,7 @@ function FilterPanel({
 
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-primary">Price</h3>
+          <h3 className="text-xl font-bold text-primary">Giá</h3>
           <ChevronDown size={18} className="rotate-180" />
         </div>
         <div className="relative mt-7 h-6">
@@ -144,7 +144,7 @@ function FilterPanel({
 
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-primary">Colors</h3>
+          <h3 className="text-xl font-bold text-primary">Màu sắc</h3>
           <ChevronDown size={18} className="rotate-180" />
         </div>
         <div className="mt-4 flex flex-wrap gap-4">
@@ -167,7 +167,7 @@ function FilterPanel({
 
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-primary">Size</h3>
+          <h3 className="text-xl font-bold text-primary">Kích cỡ</h3>
           <ChevronDown size={18} className="rotate-180" />
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
@@ -190,7 +190,7 @@ function FilterPanel({
 
       <div>
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-primary">Dress Style</h3>
+          <h3 className="text-xl font-bold text-primary">Phong cách</h3>
           <ChevronDown size={18} className="rotate-180" />
         </div>
         <div className="mt-5 space-y-5">
@@ -215,7 +215,7 @@ function FilterPanel({
         onClick={onApply}
         className="mt-6 h-12 w-full rounded-full bg-primary text-sm font-medium text-white transition-colors hover:bg-black/80"
       >
-        Apply Filter
+        Áp dụng
       </button>
     </div>
   );
@@ -309,9 +309,9 @@ export default function ProductListPage() {
     <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
       <div className="container-shop border-t border-black/10 py-6">
         <nav className="flex items-center gap-2 text-sm text-black/60">
-          <Link to="/" className="transition-colors hover:text-primary">Home</Link>
+          <Link to="/" className="transition-colors hover:text-primary">Trang chủ</Link>
           <ChevronRight size={16} />
-          <span className="font-medium text-primary">{activeCategoryName || 'Products'}</span>
+          <span className="font-medium text-primary">{activeCategoryName || 'Sản phẩm'}</span>
         </nav>
 
         <div className="mt-6 grid gap-8 lg:grid-cols-[295px_1fr]">
@@ -320,11 +320,11 @@ export default function ProductListPage() {
           <section className="min-w-0">
             <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
               <h1 className="text-[32px] font-black leading-none text-primary md:text-[40px]">
-                {activeCategoryName || 'Products'}
+                {activeCategoryName || 'Sản phẩm'}
               </h1>
               <div className="flex items-center gap-3">
                 <p className="hidden text-sm text-black/60 sm:block">
-                  Showing 1-{Math.min(products.length, PAGE_SIZE)} of {totalElements} Products
+                  Hiển thị 1-{Math.min(products.length, PAGE_SIZE)} trong {totalElements} Sản phẩm
                 </p>
                 <button
                   type="button"
@@ -335,9 +335,9 @@ export default function ProductListPage() {
                   <SlidersHorizontal size={18} />
                 </button>
                 <div className="hidden items-center gap-1 text-sm text-black/60 md:flex">
-                  Sort by:
+                  Sắp xếp:
                   <button type="button" className="inline-flex items-center gap-1 font-medium text-primary">
-                    Most Popular <ChevronDown size={16} />
+                    Phổ biến nhất <ChevronDown size={16} />
                   </button>
                 </div>
               </div>
@@ -355,10 +355,10 @@ export default function ProductListPage() {
               </div>
             ) : products.length === 0 ? (
               <EmptyState
-                message="No products found"
+                message="Không tìm thấy sản phẩm nào"
                 action={
                   <button type="button" onClick={clearFilters} className="rounded-full border border-black/10 px-6 py-2.5 text-sm font-medium">
-                    Clear filters
+                    Xóa bộ lọc
                   </button>
                 }
               />
@@ -408,7 +408,7 @@ export default function ProductListPage() {
               className="fixed inset-x-0 bottom-0 z-50 max-h-[88vh] overflow-y-auto rounded-t-[20px] bg-white p-4 lg:hidden"
             >
               <div className="mb-4 flex items-center justify-between px-1">
-                <h2 className="text-xl font-bold text-primary">Filters</h2>
+                <h2 className="text-xl font-bold text-primary">Bộ lọc</h2>
                 <button type="button" onClick={() => setSidebarOpen(false)} aria-label="Close filters">
                   <X size={24} className="text-black/50" />
                 </button>

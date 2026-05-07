@@ -55,25 +55,25 @@ export default function LoginPage() {
 
             <div className="max-w-[560px]">
               <p className="mb-4 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur">
-                Member access
+                Quyền truy cập thành viên
               </p>
               <h1 className="text-[56px] font-black leading-[0.98] tracking-normal">
-                FIND CLOTHES
+                TÌM QUẦN ÁO
                 <br />
-                THAT MATCHES
+                PHÙ HỢP VỚI
                 <br />
-                YOUR STYLE
+                PHONG CÁCH CỦA BẠN
               </h1>
               <p className="mt-6 max-w-[460px] text-base leading-7 text-white/70">
-                Sign in to continue your shopping journey, manage orders, and keep your cart ready across devices.
+                Đăng nhập để tiếp tục hành trình mua sắm, quản lý đơn hàng và giữ giỏ hàng luôn sẵn sàng trên mọi thiết bị.
               </p>
             </div>
 
             <div className="grid max-w-[520px] grid-cols-3 divide-x divide-white/20">
               {[
-                ['200+', 'Brands'],
-                ['2,000+', 'Products'],
-                ['30,000+', 'Customers'],
+                ['200+', 'Thương hiệu'],
+                ['2,000+', 'Sản phẩm'],
+                ['30,000+', 'Khách hàng'],
               ].map(([value, label]) => (
                 <div key={label} className="px-5 first:pl-0">
                   <p className="text-3xl font-bold">{value}</p>
@@ -97,7 +97,7 @@ export default function LoginPage() {
               </Link>
               <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-black/60 transition-colors hover:text-primary">
                 <ArrowLeft size={16} />
-                Home
+                Trang chủ
               </Link>
             </div>
 
@@ -106,9 +106,9 @@ export default function LoginPage() {
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white">
                   <ShoppingBag size={22} />
                 </div>
-                <h1 className="text-[34px] font-black leading-tight text-primary">Welcome back</h1>
+                <h1 className="text-[34px] font-black leading-tight text-primary">Chào mừng trở lại</h1>
                 <p className="mt-2 text-sm leading-6 text-black/60">
-                  Sign in to access your cart, orders, and personalized product picks.
+                  Đăng nhập để truy cập giỏ hàng, đơn hàng và các lựa chọn sản phẩm dành riêng cho bạn.
                 </p>
               </div>
 
@@ -140,10 +140,10 @@ export default function LoginPage() {
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <label htmlFor="password" className="block text-sm font-medium text-primary">
-                      Password
+                      Mật khẩu
                     </label>
                     <Link to="/login" className="text-sm text-black/50 underline underline-offset-4 transition-colors hover:text-primary">
-                      Forgot password?
+                      Quên mật khẩu?
                     </Link>
                   </div>
                   <div className="relative">
@@ -154,7 +154,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       required
-                      placeholder="Enter your password"
+                      placeholder="Nhập mật khẩu của bạn"
                       className="h-12 w-full rounded-full bg-[#F0F0F0] pl-12 pr-12 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10"
                     />
                     <button
@@ -179,20 +179,20 @@ export default function LoginPage() {
                   disabled={loading}
                   className="h-[52px] w-full rounded-full bg-primary px-8 text-sm font-medium text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading ? 'Signing in...' : 'Sign In'}
+                  {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                 </button>
               </form>
 
               <div className="mt-6 text-center text-sm text-black/60">
-                Don&apos;t have an account?{' '}
+                Chưa có tài khoản?{' '}
                 <Link to="/register" className="font-semibold text-primary underline underline-offset-4 transition-colors hover:text-black/70">
-                  Sign up
+                  Đăng ký
                 </Link>
               </div>
             </div>
 
             <p className="mt-6 text-center text-xs text-black/45">
-              By signing in, you agree to SHOP.CO account access for orders, cart, and profile services.
+              Bằng cách đăng nhập, bạn đồng ý cấp cho SHOP.CO quyền truy cập tài khoản để xử lý đơn hàng, giỏ hàng và hồ sơ.
             </p>
           </motion.div>
         </section>

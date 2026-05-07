@@ -50,7 +50,7 @@ export default function RegisterPage() {
               </Link>
               <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-black/60 transition-colors hover:text-primary">
                 <ArrowLeft size={16} />
-                Home
+                Trang chủ
               </Link>
             </div>
 
@@ -59,26 +59,26 @@ export default function RegisterPage() {
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-primary text-white">
                   <ShoppingBag size={22} />
                 </div>
-                <h1 className="text-[34px] font-black leading-tight text-primary">Create account</h1>
+                <h1 className="text-[34px] font-black leading-tight text-primary">Tạo tài khoản</h1>
                 <p className="mt-2 text-sm leading-6 text-black/60">
-                  Join SHOP.CO to save your cart, track orders, and discover pieces that match your style.
+                  Tham gia SHOP.CO để lưu giỏ hàng, theo dõi đơn hàng và khám phá những món đồ phù hợp với phong cách của bạn.
                 </p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="firstName" className="mb-2 block text-sm font-medium text-primary">First name</label>
+                    <label htmlFor="firstName" className="mb-2 block text-sm font-medium text-primary">Tên</label>
                     <div className="relative">
                       <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
-                      <input id="firstName" type="text" value={form.firstName} onChange={set('firstName')} required placeholder="First name" className="h-12 w-full rounded-full bg-[#F0F0F0] pl-11 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10" />
+                      <input id="firstName" type="text" value={form.firstName} onChange={set('firstName')} required placeholder="Tên" className="h-12 w-full rounded-full bg-[#F0F0F0] pl-11 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10" />
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="mb-2 block text-sm font-medium text-primary">Last name</label>
+                    <label htmlFor="lastName" className="mb-2 block text-sm font-medium text-primary">Họ</label>
                     <div className="relative">
                       <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
-                      <input id="lastName" type="text" value={form.lastName} onChange={set('lastName')} required placeholder="Last name" className="h-12 w-full rounded-full bg-[#F0F0F0] pl-11 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10" />
+                      <input id="lastName" type="text" value={form.lastName} onChange={set('lastName')} required placeholder="Họ" className="h-12 w-full rounded-full bg-[#F0F0F0] pl-11 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10" />
                     </div>
                   </div>
                 </div>
@@ -92,24 +92,24 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="mb-2 block text-sm font-medium text-primary">Password</label>
+                  <label htmlFor="password" className="mb-2 block text-sm font-medium text-primary">Mật khẩu</label>
                   <div className="relative">
                     <Lock size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
-                    <input id="password" type="password" value={form.password} onChange={set('password')} required minLength={6} placeholder="At least 6 characters" className="h-12 w-full rounded-full bg-[#F0F0F0] pl-12 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10" />
+                    <input id="password" type="password" value={form.password} onChange={set('password')} required minLength={6} placeholder="Ít nhất 6 ký tự" className="h-12 w-full rounded-full bg-[#F0F0F0] pl-12 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10" />
                   </div>
                 </div>
 
                 {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
 
                 <button type="submit" disabled={loading} className="h-[52px] w-full rounded-full bg-primary px-8 text-sm font-medium text-white transition-colors hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50">
-                  {loading ? 'Creating account...' : 'Create Account'}
+                  {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
                 </button>
               </form>
 
               <div className="mt-6 text-center text-sm text-black/60">
-                Already have an account?{' '}
+                Đã có tài khoản?{' '}
                 <Link to="/login" className="font-semibold text-primary underline underline-offset-4 transition-colors hover:text-black/70">
-                  Sign in
+                  Đăng nhập
                 </Link>
               </div>
             </div>
@@ -122,17 +122,17 @@ export default function RegisterPage() {
           <div className="relative z-10 flex h-full flex-col justify-between p-12">
             <Link to="/" className="text-[32px] font-black tracking-[-0.03em]">SHOP.CO</Link>
             <div className="max-w-[580px]">
-              <p className="mb-4 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur">New member</p>
-              <h2 className="text-[56px] font-black leading-[0.98]">STYLE THAT STAYS WITH YOU</h2>
+              <p className="mb-4 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-medium backdrop-blur">Thành viên mới</p>
+              <h2 className="text-[56px] font-black leading-[0.98]">PHONG CÁCH LUÔN ĐỒNG HÀNH CÙNG BẠN</h2>
               <p className="mt-6 max-w-[460px] text-base leading-7 text-white/70">
-                Create your account and keep every order, favorite fit, and cart item in one place.
+                Tạo tài khoản của bạn và giữ mọi đơn hàng, trang phục yêu thích và giỏ hàng ở cùng một nơi.
               </p>
             </div>
             <div className="grid max-w-[520px] grid-cols-3 divide-x divide-white/20">
               {[
-                ['200+', 'Brands'],
-                ['2,000+', 'Products'],
-                ['30,000+', 'Customers'],
+                ['200+', 'Thương hiệu'],
+                ['2,000+', 'Sản phẩm'],
+                ['30,000+', 'Khách hàng'],
               ].map(([value, label]) => (
                 <div key={label} className="px-5 first:pl-0">
                   <p className="text-3xl font-bold">{value}</p>
