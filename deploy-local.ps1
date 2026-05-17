@@ -95,17 +95,34 @@ $services = @(
 )
 
 if (-not $SkipBuild) {
-    Write-Step "Building Docker images (this may take a while)..."
+    Write-Step "Setting up local registry (for Docker Desktop K8s)..."
+    $registryRunning = docker inspect -f '{{.State.Running}}' local-registry 2>$null
+    if ($registryRunning -ne "true") {
+        docker rm -f local-registry 2>$null | Out-Null
+        docker run -d -p 5000:5000 --name local-registry --restart always registry:2 | Out-Null
+        Write-Ok "Local registry started on port 5000"
+    } else {
+        Write-Ok "Local registry already running"
+    }
+
+    Write-Step "Building and pushing Docker images (this may take a while)..."
 
     foreach ($svc in $services) {
-        $tag = "ecommerce/$($svc.Name):latest"
+        $tag = "localhost:5000/ecommerce/$($svc.Name):latest"
         Write-Host "  📦 Building $tag ..." -ForegroundColor DarkGray
         docker build -t $tag -f $svc.Dockerfile .
         if ($LASTEXITCODE -ne 0) {
             Write-Err "Failed to build $($svc.Name)"
             exit 1
         }
-        Write-Ok "$($svc.Name) built"
+        
+        Write-Host "  📤 Pushing $tag ..." -ForegroundColor DarkGray
+        docker push $tag | Out-Null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Err "Failed to push $($svc.Name) to local registry"
+            exit 1
+        }
+        Write-Ok "$($svc.Name) built & pushed"
     }
 } else {
     Write-Warn "Skipping Docker build (--SkipBuild flag)"

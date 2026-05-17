@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ecommerce/frontend:latest
-          imagePullPolicy: Never
+          image: localhost:5000/ecommerce/frontend:latest
+          imagePullPolicy: Always
           ports: [{ containerPort: 80 }]
           readinessProbe:
             httpGet: { path: /, port: 80 }

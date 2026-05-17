@@ -13,17 +13,10 @@ spec:
     metadata:
       labels: { app: order-service }
     spec:
-      initContainers:
-        - name: wait-keycloak
-          image: busybox:1.36
-          command: ["sh", "-c", "until nc -z keycloak 8080; do sleep 5; done"]
-        - name: wait-kafka
-          image: busybox:1.36
-          command: ["sh", "-c", "until nc -z kafka 9092; do sleep 5; done"]
       containers:
         - name: order-service
-          image: ecommerce/order-service:latest
-          imagePullPolicy: Never
+          image: localhost:5000/ecommerce/order-service:latest
+          imagePullPolicy: Always
           ports: [{ containerPort: 8085 }]
           env:
             - { name: QUARKUS_DATASOURCE_JDBC_URL, value: "jdbc:postgresql://postgres:5432/order_db" }
