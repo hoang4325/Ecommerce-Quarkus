@@ -21,7 +21,14 @@ public interface ProductServiceProxy {
             @QueryParam("page") Integer page,
             @QueryParam("size") Integer size,
             @QueryParam("search") String search,
-            @QueryParam("categoryId") String categoryId
+            @QueryParam("categoryId") String categoryId,
+            @QueryParam("minPrice") String minPrice,
+            @QueryParam("maxPrice") String maxPrice,
+            @QueryParam("color") String color,
+            @QueryParam("productSize") String productSize,
+            @QueryParam("dressStyle") String dressStyle,
+            @QueryParam("style") String style,
+            @QueryParam("sort") String sort
     );
 
     @GET
@@ -29,6 +36,47 @@ public interface ProductServiceProxy {
     Response getProduct(
             @HeaderParam("Authorization") String auth,
             @PathParam("id") String id
+    );
+
+    @GET
+    @Path("/api/products/{id}/reviews")
+    Response getProductReviews(
+            @HeaderParam("Authorization") String auth,
+            @PathParam("id") String id,
+            @QueryParam("page") Integer page,
+            @QueryParam("size") Integer size
+    );
+
+    @GET
+    @Path("/api/products/{id}/rating-summary")
+    Response getProductRatingSummary(
+            @HeaderParam("Authorization") String auth,
+            @PathParam("id") String id
+    );
+
+    @POST
+    @Path("/api/products/{id}/reviews")
+    Response createProductReview(
+            @HeaderParam("Authorization") String auth,
+            @PathParam("id") String id,
+            Object body
+    );
+
+    @PUT
+    @Path("/api/products/{id}/reviews/{reviewId}")
+    Response updateProductReview(
+            @HeaderParam("Authorization") String auth,
+            @PathParam("id") String id,
+            @PathParam("reviewId") String reviewId,
+            Object body
+    );
+
+    @DELETE
+    @Path("/api/products/{id}/reviews/{reviewId}")
+    Response deleteProductReview(
+            @HeaderParam("Authorization") String auth,
+            @PathParam("id") String id,
+            @PathParam("reviewId") String reviewId
     );
 
     @POST
