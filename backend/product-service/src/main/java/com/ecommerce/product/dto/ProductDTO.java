@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -20,6 +21,10 @@ public class ProductDTO {
     private String description;
     private BigDecimal price;
     private String imageUrl;
+    private String color;
+    private String productSize;
+    private String dressStyle;
+    private List<String> images;
     private UUID categoryId;
     private String categoryName;
     private boolean active;

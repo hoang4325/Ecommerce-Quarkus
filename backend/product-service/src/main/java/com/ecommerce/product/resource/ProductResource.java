@@ -16,7 +16,9 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+import org.jboss.logging.Logger;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Path("/api/products")
@@ -25,18 +27,39 @@ import java.util.UUID;
 @Tag(name = "Products", description = "Product management endpoints")
 public class ProductResource {
 
+    private static final Logger LOG = Logger.getLogger(ProductResource.class);
+
     @Inject
     ProductService productService;
 
     @GET
     @PermitAll
-    @Operation(summary = "List all active products (paginated, searchable)")
+    @Operation(summary = "List all active products with advanced filters")
     public ApiResponse<PagedResponse<ProductDTO>> list(
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("10") int size,
             @QueryParam("search") String search,
-            @QueryParam("categoryId") UUID categoryId) {
-        return ApiResponse.success(productService.findAll(page, size, search, categoryId));
+            @QueryParam("categoryId") UUID categoryId,
+            @QueryParam("minPrice") BigDecimal minPrice,
+            @QueryParam("maxPrice") BigDecimal maxPrice,
+            @QueryParam("color") String color,
+            @QueryParam("productSize") String productSize,
+            @QueryParam("dressStyle") String dressStyle,
+            @QueryParam("style") String style,
+            @QueryParam("sort") String sort) {
+        String resolvedDressStyle = dressStyle != null && !dressStyle.isBlank() ? dressStyle : style;
+        return ApiResponse.success(productService.findAll(
+                page,
+                size,
+                search,
+                categoryId,
+                minPrice,
+                maxPrice,
+                color,
+                productSize,
+                resolvedDressStyle,
+                sort
+        ));
     }
 
     @GET
@@ -44,6 +67,7 @@ public class ProductResource {
     @PermitAll
     @Operation(summary = "Get product by ID")
     public ApiResponse<ProductDTO> getById(@PathParam("id") UUID id) {
+        LOG.infof("Fetching product by ID: %s", id);
         return ApiResponse.success(productService.findById(id));
     }
 

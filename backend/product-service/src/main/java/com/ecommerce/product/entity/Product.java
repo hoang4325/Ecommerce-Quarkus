@@ -10,6 +10,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -39,9 +41,21 @@ public class Product extends PanacheEntityBase {
     @Column(name = "image_url", length = 500)
     private String imageUrl;
 
+    @Column(length = 64)
+    private String color;
+
+    @Column(name = "product_size", length = 64)
+    private String productSize;
+
+    @Column(name = "dress_style", length = 64)
+    private String dressStyle;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImage> images = new ArrayList<>();
 
     @Column(nullable = false)
     private boolean active = true;

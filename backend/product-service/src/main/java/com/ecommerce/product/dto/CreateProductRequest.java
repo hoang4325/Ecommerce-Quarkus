@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -25,6 +26,17 @@ public class CreateProductRequest {
     private BigDecimal price;
 
     private String imageUrl;
+
+    @Size(max = 64, message = "Color must not exceed 64 characters")
+    private String color;
+
+    @Size(max = 64, message = "Product size must not exceed 64 characters")
+    private String productSize;
+
+    @Size(max = 64, message = "Dress style must not exceed 64 characters")
+    private String dressStyle;
+
+    private List<String> images;
 
     private UUID categoryId;
 }

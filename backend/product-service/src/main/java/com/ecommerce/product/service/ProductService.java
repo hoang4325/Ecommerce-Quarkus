@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.jboss.logging.Logger;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @ApplicationScoped
@@ -28,9 +29,34 @@ public class ProductService {
     @Inject CategoryRepository categoryRepository;
     @Inject ProductMapper productMapper;
 
-    public PagedResponse<ProductDTO> findAll(int page, int size, String search, UUID categoryId) {
+    public PagedResponse<ProductDTO> findAll(
+            int page,
+            int size,
+            String search,
+            UUID categoryId,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            String color,
+            String productSize,
+            String dressStyle,
+            String sort
+    ) {
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw new BusinessException("minPrice must be less than or equal to maxPrice");
+        }
+
         Page pageRequest = Page.of(page, size);
-        var query = productRepository.findAllActive(pageRequest, search, categoryId);
+        var query = productRepository.findAllActive(
+                pageRequest,
+                search,
+                categoryId,
+                minPrice,
+                maxPrice,
+                color,
+                productSize,
+                dressStyle,
+                sort
+        );
         long total = query.count();
         var products = query.list().stream().map(productMapper::toDTO).toList();
         return PagedResponse.of(products, page, size, total);
@@ -55,12 +81,25 @@ public class ProductService {
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setImageUrl(request.getImageUrl());
+        product.setColor(request.getColor());
+        product.setProductSize(request.getProductSize());
+        product.setDressStyle(request.getDressStyle());
         product.setActive(true);
 
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findByIdOptional(request.getCategoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Category", "id", request.getCategoryId()));
             product.setCategory(category);
+        }
+
+        if (request.getImages() != null && !request.getImages().isEmpty()) {
+            for (String url : request.getImages()) {
+                com.ecommerce.product.entity.ProductImage pi = new com.ecommerce.product.entity.ProductImage();
+                pi.setUrl(url);
+                pi.setProduct(product);
+                pi.setPrimary(url.equals(request.getImageUrl()));
+                product.getImages().add(pi);
+            }
         }
 
         productRepository.persist(product);
@@ -84,6 +123,9 @@ public class ProductService {
         if (request.getDescription() != null) product.setDescription(request.getDescription());
         if (request.getPrice() != null)       product.setPrice(request.getPrice());
         if (request.getImageUrl() != null)    product.setImageUrl(request.getImageUrl());
+        if (request.getColor() != null)       product.setColor(request.getColor());
+        if (request.getProductSize() != null) product.setProductSize(request.getProductSize());
+        if (request.getDressStyle() != null)  product.setDressStyle(request.getDressStyle());
         if (request.getActive() != null)      product.setActive(request.getActive());
 
         if (request.getCategoryId() != null) {

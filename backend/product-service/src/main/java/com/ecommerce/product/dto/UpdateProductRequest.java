@@ -23,6 +23,15 @@ public class UpdateProductRequest {
 
     private String imageUrl;
 
+    @Size(max = 64, message = "Color must not exceed 64 characters")
+    private String color;
+
+    @Size(max = 64, message = "Product size must not exceed 64 characters")
+    private String productSize;
+
+    @Size(max = 64, message = "Dress style must not exceed 64 characters")
+    private String dressStyle;
+
     private UUID categoryId;
 
     private Boolean active;
