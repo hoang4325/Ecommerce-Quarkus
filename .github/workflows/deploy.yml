@@ -1,4 +1,4 @@
-name: CI/CD Pipeline for E-Commerce Platform
+name: CI/CD Pipeline — Deploy to Railway
 
 on:
   push:
@@ -8,45 +8,30 @@ on:
 
 # ─── Global env ───────────────────────────────────────────────────────────────
 env:
-  REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/ecommerce
-  K8S_NAMESPACE: ecommerce
   JAVA_VERSION: '17'
   NODE_VERSION: '22'
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 1: Build & Test Backend (Quarkus)
+  # JOB 1: Build & Validate Backend (Quarkus)
   # ─────────────────────────────────────────────────────────────────────────────
   build-backend:
-    name: Build Backend (Quarkus)
+    name: Build Backend — ${{ matrix.service.name }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     strategy:
       fail-fast: false
       matrix:
         service:
           - name: api-gateway
-            port: 8086
-          - name: product-service
-            port: 8083
-          - name: cart-service
-            port: 8084
-          - name: order-service
-            port: 8085
           - name: auth-service
-            port: 8082
+          - name: product-service
+          - name: cart-service
+          - name: order-service
           - name: inventory-service
-            port: 8087
           - name: payment-service
-            port: 8088
           - name: notification-service
-            port: 8089
           - name: user-service
-            port: 8090
 
     steps:
       - name: Checkout code
@@ -59,47 +44,19 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Build & Test ${{ matrix.service.name }}
+      - name: Compile ${{ matrix.service.name }}
         run: |
           mvn package \
             -pl backend/${{ matrix.service.name }} -am \
             -DskipTests \
             --batch-mode --no-transfer-progress
 
-      - name: Log in to GitHub Container Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build & Push Docker image — ${{ matrix.service.name }}
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./backend/${{ matrix.service.name }}/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.service.name }}:latest
-          cache-from: type=gha,scope=${{ matrix.service.name }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.service.name }}
-
   # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 2: Build & Test Frontend (React/Vite)
+  # JOB 2: Build & Validate Frontend (React/Vite)
   # ─────────────────────────────────────────────────────────────────────────────
   build-frontend:
     name: Build Frontend (React/Vite)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout code
@@ -130,189 +87,102 @@ jobs:
         env:
           VITE_API_BASE_URL: /api
 
-      - name: Log in to GitHub Container Registry
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build & Push Docker image — frontend
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./frontend/Dockerfile
-          push: true
-          build-args: |
-            VITE_API_BASE_URL=/api
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/frontend:latest
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
-
   # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 3: Deploy to Kubernetes
+  # JOB 3: Deploy to Railway
   # ─────────────────────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy to Kubernetes
-    runs-on: ubuntu-latest           # ← GitHub-hosted runner (no self-hosted needed)
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
     needs: [ build-backend, build-frontend ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    permissions:
-      contents: read
-      packages: read
-
     environment:
       name: production
+      url: https://railway.app/project/${{ secrets.RAILWAY_PROJECT_ID }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── Install kubectl ───────────────────────────────────────────────────────
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'v1.29.0'
+      # ── Install Railway CLI ───────────────────────────────────────────────────
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@latest
 
-      # ── Validate KUBE_CONFIG secret is set ──────────────────────────────────
+      # ── Validate RAILWAY_TOKEN secret ─────────────────────────────────────────
       # HOW TO SET THIS SECRET:
-      # 1. On the machine that has access to your cluster, run:
-      #      cat ~/.kube/config | base64 -w 0
-      # 2. Copy the output
-      # 3. Go to: GitHub repo → Settings → Secrets and variables → Actions
-      # 4. Click "New repository secret"
-      # 5. Name: KUBE_CONFIG  |  Value: (paste the base64 string)
-      - name: Validate KUBE_CONFIG secret
+      # 1. Go to https://railway.app → New Project (create project)
+      # 2. Project Settings → Tokens → New Token
+      # 3. Copy the token
+      # 4. GitHub repo → Settings → Secrets and variables → Actions
+      # 5. New repository secret → Name: RAILWAY_TOKEN, Value: <token>
+      - name: Validate RAILWAY_TOKEN secret
         run: |
-          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
             echo ""
             echo "╔══════════════════════════════════════════════════════════════╗"
-            echo "║  ❌  KUBE_CONFIG secret is NOT set in GitHub!                ║"
+            echo "║  ❌  RAILWAY_TOKEN secret is NOT set in GitHub!              ║"
             echo "╠══════════════════════════════════════════════════════════════╣"
             echo "║  HOW TO FIX:                                                 ║"
-            echo "║  1. On your Kubernetes server, run:                          ║"
-            echo "║     cat ~/.kube/config | base64 -w 0                         ║"
-            echo "║  2. Go to: GitHub repo → Settings →                          ║"
-            echo "║            Secrets and variables → Actions                   ║"
-            echo "║  3. Add secret: KUBE_CONFIG = <the base64 string>            ║"
+            echo "║  1. Go to https://railway.app → Your Project                 ║"
+            echo "║  2. Settings → Tokens → Create New Token                     ║"
+            echo "║  3. GitHub repo → Settings →                                 ║"
+            echo "║     Secrets and variables → Actions                          ║"
+            echo "║  4. Add secret: RAILWAY_TOKEN = <your token>                 ║"
             echo "╚══════════════════════════════════════════════════════════════╝"
-            echo ""
             exit 1
           fi
-          echo "✅ KUBE_CONFIG secret is set."
+          echo "✅ RAILWAY_TOKEN is set."
 
-      # ── Configure kubeconfig from GitHub Secret ───────────────────────────────
-      - name: Configure kubeconfig
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-          # Confirm the file was written and is non-empty
-          if [ ! -s $HOME/.kube/config ]; then
-            echo "❌ kubeconfig file is empty after decoding! Check your KUBE_CONFIG secret."
-            exit 1
-          fi
-          echo "✅ kubeconfig written ($(wc -c < $HOME/.kube/config) bytes)"
-
-      # ── Verify cluster connectivity ───────────────────────────────────────────
-      - name: Verify cluster connectivity
-        run: kubectl cluster-info --request-timeout=15s
-
-      # ── Apply namespace first ─────────────────────────────────────────────────
-      - name: Create namespace (idempotent)
-        run: kubectl apply -f k8s/namespace.yaml
-
-      # ── Create GHCR image pull secret ─────────────────────────────────────────
-      - name: Create image pull secret for GHCR
-        run: |
-          kubectl create secret docker-registry ghcr-pull-secret \
-            --docker-server=${{ env.REGISTRY }} \
-            --docker-username=${{ github.actor }} \
-            --docker-password=${{ secrets.GITHUB_TOKEN }} \
-            --namespace=${{ env.K8S_NAMESPACE }} \
-            --dry-run=client -o yaml | kubectl apply -f -
-
-      # ── Apply ConfigMaps & Secrets ────────────────────────────────────────────
-      - name: Apply ConfigMaps & Secrets
-        run: |
-          kubectl apply -f k8s/secret.yaml    -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
-
-      # ── Apply infrastructure (Postgres, Kafka, Keycloak) ─────────────────────
-      - name: Deploy infrastructure
-        run: |
-          kubectl apply -f k8s/postgres.yaml  -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/kafka.yaml     -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/keycloak.yaml  -n ${{ env.K8S_NAMESPACE }}
-
-      # ── Substitute image tag & registry in all service manifests ─────────────
-      - name: Inject image tag into manifests
+      # ── Deploy Backend Microservices ──────────────────────────────────────────
+      # Each service must exist in your Railway project with the SAME name.
+      # Create them at: railway.app → Project → New Service → Empty Service
+      # Then set the service name to match exactly.
+      - name: Deploy backend services
         env:
-          IMAGE_TAG: ${{ github.sha }}
-          IMAGE_REGISTRY: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          # Replace placeholders in all k8s YAML files
-          find k8s/ -name "*.yaml" | xargs sed -i \
-            -e "s|IMAGE_TAG|${IMAGE_TAG}|g" \
-            -e "s|IMAGE_REGISTRY|${IMAGE_REGISTRY}|g"
+          declare -A SERVICES=(
+            ["auth-service"]="backend/auth-service/Dockerfile"
+            ["product-service"]="backend/product-service/Dockerfile"
+            ["cart-service"]="backend/cart-service/Dockerfile"
+            ["order-service"]="backend/order-service/Dockerfile"
+            ["inventory-service"]="backend/inventory-service/Dockerfile"
+            ["payment-service"]="backend/payment-service/Dockerfile"
+            ["notification-service"]="backend/notification-service/Dockerfile"
+            ["user-service"]="backend/user-service/Dockerfile"
+            ["api-gateway"]="backend/api-gateway/Dockerfile"
+          )
 
-      # ── Deploy all backend microservices ──────────────────────────────────────
-      - name: Deploy microservices
-        run: |
-          kubectl apply -f k8s/auth-service.yaml         -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/product-service.yaml      -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/cart-service.yaml         -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/order-service.yaml        -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/inventory-service.yaml    -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/payment-service.yaml      -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/notification-service.yaml -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/user-service.yaml         -n ${{ env.K8S_NAMESPACE }}
-          kubectl apply -f k8s/api-gateway.yaml          -n ${{ env.K8S_NAMESPACE }}
+          for service in "${!SERVICES[@]}"; do
+            dockerfile="${SERVICES[$service]}"
+            echo "🚀 Deploying $service (Dockerfile: $dockerfile)..."
+            railway up \
+              --service "$service" \
+              --dockerfile "$dockerfile" \
+              --detach
+            echo "✅ $service dispatched."
+          done
 
-      # ── Deploy frontend ───────────────────────────────────────────────────────
+      # ── Deploy Frontend ───────────────────────────────────────────────────────
       - name: Deploy frontend
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          kubectl apply -f k8s/frontend.yaml -n ${{ env.K8S_NAMESPACE }}
+          echo "🚀 Deploying frontend..."
+          railway up \
+            --service frontend \
+            --dockerfile frontend/Dockerfile \
+            --detach
+          echo "✅ Frontend dispatched."
 
-      # ── Wait for critical deployments to be ready ─────────────────────────────
-      - name: Wait for rollouts
+      # ── Deployment summary ────────────────────────────────────────────────────
+      - name: Deployment summary
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          echo "⏳ Waiting for api-gateway..."
-          kubectl rollout status deployment/api-gateway \
-            -n ${{ env.K8S_NAMESPACE }} --timeout=120s
-
-          echo "⏳ Waiting for frontend..."
-          kubectl rollout status deployment/frontend \
-            -n ${{ env.K8S_NAMESPACE }} --timeout=60s
-
-      # ── Final status report ───────────────────────────────────────────────────
-      - name: Verify running pods
-        run: |
-          echo "=== Pods ==="
-          kubectl get pods -n ${{ env.K8S_NAMESPACE }} \
-            -l app.kubernetes.io/part-of=ecommerce
-
-          echo "=== Services ==="
-          kubectl get services -n ${{ env.K8S_NAMESPACE }}
-
-          echo "=== Ingress ==="
-          kubectl get ingress -n ${{ env.K8S_NAMESPACE }}
-
-      # ── Notify on failure ─────────────────────────────────────────────────────
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "❌ Deployment failed! Recent cluster events:"
-          kubectl get events -n ${{ env.K8S_NAMESPACE }} \
-            --sort-by='.lastTimestamp' | tail -30
-          echo "=== Pod status ==="
-          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
+          echo ""
+          echo "╔══════════════════════════════════════════════════════════════╗"
+          echo "║  ✅  All services dispatched to Railway!                     ║"
+          echo "║  Monitor deployments at: https://railway.app                 ║"
+          echo "╚══════════════════════════════════════════════════════════════╝"
+          railway status || true
