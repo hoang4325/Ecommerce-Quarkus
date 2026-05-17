@@ -183,14 +183,45 @@ jobs:
         with:
           version: 'v1.29.0'
 
+      # ── Validate KUBE_CONFIG secret is set ──────────────────────────────────
+      # HOW TO SET THIS SECRET:
+      # 1. On the machine that has access to your cluster, run:
+      #      cat ~/.kube/config | base64 -w 0
+      # 2. Copy the output
+      # 3. Go to: GitHub repo → Settings → Secrets and variables → Actions
+      # 4. Click "New repository secret"
+      # 5. Name: KUBE_CONFIG  |  Value: (paste the base64 string)
+      - name: Validate KUBE_CONFIG secret
+        run: |
+          if [ -z "${{ secrets.KUBE_CONFIG }}" ]; then
+            echo ""
+            echo "╔══════════════════════════════════════════════════════════════╗"
+            echo "║  ❌  KUBE_CONFIG secret is NOT set in GitHub!                ║"
+            echo "╠══════════════════════════════════════════════════════════════╣"
+            echo "║  HOW TO FIX:                                                 ║"
+            echo "║  1. On your Kubernetes server, run:                          ║"
+            echo "║     cat ~/.kube/config | base64 -w 0                         ║"
+            echo "║  2. Go to: GitHub repo → Settings →                          ║"
+            echo "║            Secrets and variables → Actions                   ║"
+            echo "║  3. Add secret: KUBE_CONFIG = <the base64 string>            ║"
+            echo "╚══════════════════════════════════════════════════════════════╝"
+            echo ""
+            exit 1
+          fi
+          echo "✅ KUBE_CONFIG secret is set."
+
       # ── Configure kubeconfig from GitHub Secret ───────────────────────────────
-      # Add secret: KUBE_CONFIG = base64 content of your ~/.kube/config
-      # Run: cat ~/.kube/config | base64 -w 0
       - name: Configure kubeconfig
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
+          # Confirm the file was written and is non-empty
+          if [ ! -s $HOME/.kube/config ]; then
+            echo "❌ kubeconfig file is empty after decoding! Check your KUBE_CONFIG secret."
+            exit 1
+          fi
+          echo "✅ kubeconfig written ($(wc -c < $HOME/.kube/config) bytes)"
 
       # ── Verify cluster connectivity ───────────────────────────────────────────
       - name: Verify cluster connectivity
