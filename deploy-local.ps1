@@ -17,7 +17,7 @@ param(
     [switch]$SkipBuild
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 Set-Location $PSScriptRoot
 
 # ─── Colors ───────────────────────────────────────────────────────────────────
@@ -35,17 +35,36 @@ Write-Host "╚═════════════════════�
 Write-Step "Checking prerequisites..."
 
 # Check Docker
-try { docker version --format '{{.Server.Version}}' | Out-Null; Write-Ok "Docker is running" }
-catch { Write-Err "Docker is not running. Start Docker Desktop first!"; exit 1 }
+if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Err "Docker not found. Install Docker Desktop first!"
+    exit 1
+}
+$dockerOut = docker info 2>&1
+if ($LASTEXITCODE -ne 0) {
+    Write-Err "Docker is not running. Start Docker Desktop first!"
+    exit 1
+}
+Write-Ok "Docker is running"
 
 # Check kubectl
-try { kubectl version --client --short 2>$null | Out-Null; Write-Ok "kubectl is installed" }
-catch { Write-Err "kubectl not found. Install it or enable Kubernetes in Docker Desktop."; exit 1 }
+if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
+    Write-Err "kubectl not found!"
+    Write-Host ""
+    Write-Host "  HOW TO FIX:" -ForegroundColor Yellow
+    Write-Host "  1. Open Docker Desktop -> Settings -> Kubernetes" -ForegroundColor Yellow
+    Write-Host "  2. Enable Kubernetes -> Apply & Restart" -ForegroundColor Yellow
+    Write-Host "  OR install kubectl manually:" -ForegroundColor Yellow
+    Write-Host "     winget install Kubernetes.kubectl" -ForegroundColor Yellow
+    exit 1
+}
+Write-Ok "kubectl is installed"
 
 # Check Kubernetes cluster
 Write-Step "Verifying Kubernetes cluster..."
-$clusterInfo = kubectl cluster-info 2>&1
-if ($LASTEXITCODE -ne 0) {
+$clusterOut = kubectl cluster-info 2>&1
+$clusterExit = $LASTEXITCODE
+
+if ($clusterExit -ne 0) {
     Write-Err "Kubernetes cluster is NOT running!"
     Write-Host ""
     Write-Host "  HOW TO FIX:" -ForegroundColor Yellow
