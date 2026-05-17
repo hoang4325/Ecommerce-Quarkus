@@ -1,10 +1,19 @@
+# =============================================================================
+# ElectroShop — Full Stack Docker Compose
+# =============================================================================
+
 services:
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # INFRASTRUCTURE: PostgreSQL
+  # ─────────────────────────────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: ecommerce-postgres
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
@@ -14,12 +23,45 @@ services:
       test: ["CMD-SHELL", "pg_isready -U admin"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
       - ecommerce-net
+    restart: unless-stopped
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # Phase 2: Keycloak (OIDC Identity Provider)
+  # INFRASTRUCTURE: Apache Kafka
+  # ─────────────────────────────────────────────────────────────────────────────
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: ecommerce-kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qg
+    ports:
+      - "29092:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # INFRASTRUCTURE: Keycloak
   # ─────────────────────────────────────────────────────────────────────────────
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.5
@@ -42,45 +84,272 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    networks:
-      - ecommerce-net
     healthcheck:
       test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo 'OK'"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
-
-  # ─────────────────────────────────────────────────────────────────────────────
-  # Phase 3: Kafka (KRaft mode — no Zookeeper)
-  # ─────────────────────────────────────────────────────────────────────────────
-  kafka:
-    image: apache/kafka:3.7.0
-    container_name: ecommerce-kafka
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:29092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
-      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qg
-    ports:
-      - "29092:29092"
+      retries: 15
+      start_period: 60s
     networks:
       - ecommerce-net
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
-      interval: 10s
-      timeout: 10s
-      retries: 10
-      start_period: 30s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # BACKEND SERVICES (No healthchecks because distroless has no shell)
+  # ─────────────────────────────────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: .
+      dockerfile: backend/auth-service/Dockerfile
+    container_name: ecommerce-auth-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/auth_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      QUARKUS_REST_CLIENT_KEYCLOAK_ADMIN_URL: http://keycloak:8080
+      QUARKUS_REST_CLIENT_KEYCLOAK_TOKEN_URL: http://keycloak:8080
+      QUARKUS_HTTP_PORT: 8082
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: .
+      dockerfile: backend/product-service/Dockerfile
+    container_name: ecommerce-product-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/product_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      QUARKUS_HTTP_PORT: 8083
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  cart-service:
+    build:
+      context: .
+      dockerfile: backend/cart-service/Dockerfile
+    container_name: ecommerce-cart-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/cart_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      QUARKUS_HTTP_PORT: 8084
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  order-service:
+    build:
+      context: .
+      dockerfile: backend/order-service/Dockerfile
+    container_name: ecommerce-order-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/order_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      QUARKUS_HTTP_PORT: 8085
+    ports:
+      - "8085:8085"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  inventory-service:
+    build:
+      context: .
+      dockerfile: backend/inventory-service/Dockerfile
+    container_name: ecommerce-inventory-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/inventory_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      QUARKUS_HTTP_PORT: 8087
+    ports:
+      - "8087:8087"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: backend/payment-service/Dockerfile
+    container_name: ecommerce-payment-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/payment_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      QUARKUS_HTTP_PORT: 8088
+    ports:
+      - "8088:8088"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: backend/notification-service/Dockerfile
+    container_name: ecommerce-notification-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/user_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      QUARKUS_HTTP_PORT: 8089
+    ports:
+      - "8089:8089"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: .
+      dockerfile: backend/user-service/Dockerfile
+    container_name: ecommerce-user-service
+    environment:
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/user_db
+      QUARKUS_DATASOURCE_USERNAME: admin
+      QUARKUS_DATASOURCE_PASSWORD: admin123
+      QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/realms/ecommerce
+      QUARKUS_HTTP_PORT: 8090
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # API GATEWAY
+  # ─────────────────────────────────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: .
+      dockerfile: backend/api-gateway/Dockerfile
+    container_name: ecommerce-api-gateway
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ecommerce
+      AUTH_SERVICE_URL: http://auth-service:8082
+      PRODUCT_SERVICE_URL: http://product-service:8083
+      CART_SERVICE_URL: http://cart-service:8084
+      ORDER_SERVICE_URL: http://order-service:8085
+      INVENTORY_SERVICE_URL: http://inventory-service:8087
+      PAYMENT_SERVICE_URL: http://payment-service:8088
+      NOTIFICATION_SERVICE_URL: http://notification-service:8089
+      USER_SERVICE_URL: http://user-service:8090
+      QUARKUS_HTTP_PORT: 8086
+    ports:
+      - "8086:8086"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # FRONTEND
+  # ─────────────────────────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: /
+    container_name: ecommerce-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api-gateway:
+        condition: service_started
+    networks:
+      - ecommerce-net
+    restart: unless-stopped
 
 networks:
   ecommerce-net:

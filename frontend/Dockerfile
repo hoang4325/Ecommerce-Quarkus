@@ -54,9 +54,10 @@ COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Use non-root nginx via pid file in /tmp
 RUN sed -i 's|/var/run/nginx.pid|/tmp/nginx.pid|g' /etc/nginx/nginx.conf && \
+    sed -i 's|/run/nginx.pid|/tmp/nginx.pid|g' /etc/nginx/nginx.conf && \
     # Allow non-root user to bind port 8080 (alternative to 80 for non-root)
     # and write to cache dirs
-    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /usr/share/nginx/html && \
+    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /usr/share/nginx/html /etc/nginx/conf.d && \
     chmod -R 755 /var/cache/nginx
 
 # Run as non-root user
