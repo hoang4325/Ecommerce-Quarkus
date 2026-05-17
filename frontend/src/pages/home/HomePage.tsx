@@ -9,9 +9,9 @@ const HERO_IMAGE =
   'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop';
 
 const STATS = [
-  { value: '200+', label: 'International Brands' },
-  { value: '2,000+', label: 'High-Quality Products' },
-  { value: '30,000+', label: 'Happy Customers' },
+  { value: '200+', label: 'Thương hiệu quốc tế' },
+  { value: '2,000+', label: 'Sản phẩm chất lượng cao' },
+  { value: '30,000+', label: 'Khách hàng hài lòng' },
 ];
 
 const BRAND_LOGOS = ['VERSACE', 'ZARA', 'GUCCI', 'PRADA', 'Calvin Klein'];
@@ -20,25 +20,25 @@ const FALLBACK_PRODUCTS: ProductDTO[] = [];
 
 const DRESS_STYLES = [
   {
-    name: 'Casual',
+    name: 'Thường ngày',
     query: 'casual',
     image: 'https://images.unsplash.com/photo-1523398002811-999ca8dec234?q=80&w=900&auto=format&fit=crop',
     wide: false,
   },
   {
-    name: 'Formal',
+    name: 'Trang trọng',
     query: 'formal',
     image: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=1100&auto=format&fit=crop',
     wide: true,
   },
   {
-    name: 'Party',
+    name: 'Tiệc tùng',
     query: 'party',
     image: 'https://images.unsplash.com/photo-1506629905607-d9bf04a9fbb8?q=80&w=1100&auto=format&fit=crop',
     wide: true,
   },
   {
-    name: 'Gym',
+    name: 'Thể thao',
     query: 'gym',
     image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=900&auto=format&fit=crop',
     wide: false,
@@ -48,15 +48,15 @@ const DRESS_STYLES = [
 const REVIEWS = [
   {
     name: 'Sarah M.',
-    text: "I'm blown away by the quality and style of the clothes I received from SHOP.CO. Every piece feels thoughtfully made and easy to wear.",
+    text: "Tôi thực sự ấn tượng với chất lượng và phong cách của những bộ quần áo từ SHOP.CO. Mỗi món đồ đều được chăm chút kỹ lưỡng và dễ mặc.",
   },
   {
     name: 'Alex K.',
-    text: "Finding clothes that align with my personal style used to be a challenge. This store made the whole experience simple and sharp.",
+    text: "Tìm kiếm những bộ quần áo phù hợp với phong cách cá nhân từng là một thử thách. Cửa hàng này đã khiến mọi thứ trở nên đơn giản và sắc sảo.",
   },
   {
     name: 'James L.',
-    text: "The range is impressive, from casual essentials to smart pieces. I always find something that fits the exact mood I want.",
+    text: "Sự đa dạng thật đáng kinh ngạc, từ những món đồ cơ bản đến trang phục lịch sự. Tôi luôn tìm thấy thứ gì đó phù hợp với tâm trạng mình muốn.",
   },
 ];
 
@@ -71,7 +71,7 @@ const staggerContainer = {
 };
 
 function formatPrice(price: number) {
-  return `$${Math.round(price / 10000)}`;
+  return `${price.toLocaleString('vi-VN')} đ`;
 }
 
 function Rating({ value = 4.5 }: { value?: number }) {
@@ -150,7 +150,7 @@ function ProductSection({
           to="/products"
           className="inline-flex h-[52px] min-w-[218px] items-center justify-center rounded-full border border-black/10 px-8 text-sm font-medium transition-colors hover:border-primary"
         >
-          View All
+          Xem tất cả
         </Link>
       </div>
     </section>
@@ -183,19 +183,18 @@ export default function HomePage() {
             animate="visible"
           >
             <motion.h1 variants={fadeInUp} className="max-w-[580px] text-[42px] font-black leading-[0.95] tracking-normal text-primary sm:text-6xl lg:text-[64px]">
-              FIND CLOTHES
+              TÌM TRANG PHỤC
               <br />
-              THAT MATCHES
+              PHÙ HỢP VỚI
               <br />
-              YOUR STYLE
+              PHONG CÁCH CỦA BẠN
             </motion.h1>
             <motion.p variants={fadeInUp} className="mt-6 max-w-[545px] text-sm leading-6 text-black/60">
-              Browse through our diverse range of meticulously crafted garments, designed
-              to bring out your individuality and cater to your sense of style.
+              Khám phá bộ sưu tập đa dạng các trang phục được chế tác tỉ mỉ của chúng tôi, được thiết kế để tôn lên cá tính và đáp ứng phong cách thời trang của bạn.
             </motion.p>
             <motion.div variants={fadeInUp}>
               <Link to="/products" className="mt-7 inline-flex h-[52px] min-w-[210px] items-center justify-center rounded-full bg-primary px-9 py-4 text-sm font-semibold text-white transition-colors hover:bg-black/80">
-                Shop Now
+                Mua ngay
               </Link>
             </motion.div>
             <motion.div variants={fadeInUp} className="mt-10 grid max-w-[610px] grid-cols-3 divide-x divide-black/10">
@@ -241,8 +240,8 @@ export default function HomePage() {
         </section>
       ) : (
         <>
-          <ProductSection title="NEW ARRIVALS" products={newArrivals} />
-          <ProductSection title="TOP SELLING" products={topSelling} />
+          <ProductSection title="HÀNG MỚI VỀ" products={newArrivals} />
+          <ProductSection title="BÁN CHẠY NHẤT" products={topSelling} />
         </>
       )}
 
@@ -255,7 +254,7 @@ export default function HomePage() {
             viewport={{ once: true, margin: '-80px' }}
             className="text-center text-4xl font-black leading-tight text-primary md:text-5xl"
           >
-            BROWSE BY DRESS STYLE
+            TÌM THEO PHONG CÁCH
           </motion.h2>
           <motion.div
             variants={staggerContainer}
@@ -287,9 +286,9 @@ export default function HomePage() {
 
       <section className="container-shop pb-20">
         <div className="flex items-end justify-between gap-6">
-          <h2 className="text-4xl font-black leading-tight text-primary md:text-5xl">OUR HAPPY CUSTOMERS</h2>
+          <h2 className="text-4xl font-black leading-tight text-primary md:text-5xl">KHÁCH HÀNG HÀI LÒNG</h2>
           <Link to="/products" className="hidden items-center gap-2 text-sm font-semibold md:inline-flex">
-            Shop collection <ArrowRight size={18} />
+            Xem bộ sưu tập <ArrowRight size={18} />
           </Link>
         </div>
         <motion.div

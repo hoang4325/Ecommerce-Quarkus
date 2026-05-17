@@ -4,7 +4,7 @@ import { paymentApi } from '../../api/endpoints/paymentApi';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import type { PaymentDTO } from '../../types';
 
-const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
+const formatPrice = (price: number) => `${price.toLocaleString('vi-VN')} đ`;
 
 export default function AdminPaymentPage() {
   const { data, isLoading } = useQuery({

@@ -6,9 +6,9 @@ export default function TopBar() {
     <div className="bg-primary text-white text-xs">
       <div className="container-shop relative flex h-9 items-center justify-center">
         <p className="text-center text-[11px] sm:text-xs">
-          Sign up and get 20% off to your first order.{' '}
+          Đăng ký ngay để nhận giảm giá 20% cho đơn hàng đầu tiên.{' '}
           <Link to="/register" className="font-semibold underline underline-offset-2">
-            Sign Up Now
+            Đăng Ký Ngay
           </Link>
         </p>
         <button

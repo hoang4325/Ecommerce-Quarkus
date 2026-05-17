@@ -10,7 +10,7 @@ import type { OrderDTO } from '../../types';
 
 const STATUS_OPTIONS = Object.values(OrderStatus);
 const PAGE_SIZE = 20;
-const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
+const formatPrice = (price: number) => `${price.toLocaleString('vi-VN')} đ`;
 
 export default function AdminOrderListPage() {
   const [page, setPage] = useState(0);

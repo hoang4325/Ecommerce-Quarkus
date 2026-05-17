@@ -7,7 +7,7 @@ import Pagination from '../../components/ui/Pagination';
 import type { ProductDTO, CreateProductRequest, CategoryDTO } from '../../types';
 
 const PAGE_SIZE = 10;
-const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
+const formatPrice = (price: number) => `${price.toLocaleString('vi-VN')} đ`;
 
 export default function AdminProductListPage() {
   const [page, setPage] = useState(0);

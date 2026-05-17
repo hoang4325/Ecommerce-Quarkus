@@ -16,7 +16,7 @@ import { orderAdminApi } from '../../api/endpoints/orderApi';
 import { productApi, categoryApi } from '../../api/endpoints/productApi';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 
-const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
+const formatPrice = (price: number) => `${price.toLocaleString('vi-VN')} đ`;
 
 const StatCard = ({ title, value, icon: Icon, helper }: {
   title: string;

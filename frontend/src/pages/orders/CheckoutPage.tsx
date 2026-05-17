@@ -53,7 +53,7 @@ export default function CheckoutPage() {
     },
   });
 
-  const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
+  const formatPrice = (price: number) => `${price.toLocaleString('vi-VN')} đ`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

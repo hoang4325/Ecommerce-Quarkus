@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { CheckCircle, ChevronRight, Minus, Plus, ShoppingCart, Star } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { CheckCircle, ChevronRight, Minus, Plus, ShoppingCart, Star, Send, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { productApi } from '../../api/endpoints/productApi';
 import { cartApi } from '../../api/endpoints/cartApi';
 import { inventoryApi } from '../../api/endpoints/inventoryApi';
@@ -66,30 +66,86 @@ const FALLBACK_PRODUCTS: ProductDTO[] = [
 ];
 
 const COLORS = [
-  { name: 'Olive', value: '#4F4631' },
-  { name: 'Forest', value: '#314F4A' },
-  { name: 'Navy', value: '#31344F' },
+  { name: 'Xanh lá', value: '#00C12B' },
+  { name: 'Đỏ', value: '#F50606' },
+  { name: 'Vàng', value: '#F5DD06' },
+  { name: 'Cam', value: '#F57906' },
+  { name: 'Xanh lam nhạt', value: '#06CAF5' },
+  { name: 'Xanh dương', value: '#063AF5' },
+  { name: 'Tím', value: '#7D06F5' },
+  { name: 'Hồng', value: '#F506A4' },
+  { name: 'Trắng', value: '#FFFFFF' },
+  { name: 'Đen', value: '#000000' },
 ];
 
-const SIZES = ['Small', 'Medium', 'Large', 'X-Large'];
+const SIZES = ['S', 'M', 'L', 'XL', 'XXL', '3XL'];
 
-const REVIEWS = [
-  {
-    name: 'Sarah M.',
-    text: "Chất lượng tốt hơn tôi mong đợi. Vải có cảm giác chắc chắn mà không quá nặng, và phom dáng giống hệt như trên ảnh sản phẩm.",
-  },
-  {
-    name: 'Alex K.',
-    text: 'Món đồ này phù hợp với hầu hết mọi thứ trong tủ đồ của tôi. Nó mang lại cảm giác thoải mái, nhưng vẫn đủ lịch sự để mặc ra ngoài.',
-  },
-  {
-    name: 'James L.',
-    text: 'Thiết kế đơn giản, vừa vặn thoải mái, và không bị co rút sau khi giặt. Tôi chắc chắn sẽ mua thêm một màu khác.',
-  },
-];
+// Chọn 4 màu cố định (nhất quán) cho từng sản phẩm dựa theo id
+function hashCode(str: string): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(31, h) + str.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
+function getProductColors(id: string) {
+  const h = hashCode(id);
+  // Pick 4 distinct indices from COLORS using the hash
+  const picked: typeof COLORS = [];
+  const used = new Set<number>();
+  let seed = h;
+  while (picked.length < 4) {
+    const idx = seed % COLORS.length;
+    if (!used.has(idx)) {
+      used.add(idx);
+      picked.push(COLORS[idx]);
+    }
+    // LCG-style next step
+    seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+  }
+  return picked;
+}
+
+const REVIEWS_PAGE_SIZE = 6;
+
+function ReviewStarPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          className="text-[#FFC633] transition-transform hover:scale-110"
+          aria-label={`${star} sao`}
+        >
+          <Star size={28} fill={(hovered || value) >= star ? 'currentColor' : 'none'} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function RatingBar({ label, count, total }: { label: string; count: number; total: number }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <span className="w-12 text-right text-black/60">{label}</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/10">
+        <div className="h-full rounded-full bg-[#FFC633] transition-all duration-500" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-8 text-black/40">{pct}%</span>
+    </div>
+  );
+}
 
 function formatPrice(price: number) {
-  return `$${Math.round(price / 10000)}`;
+  return `${price.toLocaleString('vi-VN')} đ`;
 }
 
 function Rating({ value = 4.5, size = 22 }: { value?: number; size?: number }) {
@@ -103,8 +159,269 @@ function Rating({ value = 4.5, size = 22 }: { value?: number; size?: number }) {
   );
 }
 
+// ─── ReviewSection ──────────────────────────────────────────────────────────
+function ReviewSection({ productId, isAuthenticated }: { productId: string; isAuthenticated: boolean }) {
+  const queryClient = useQueryClient();
+
+  const [reviewPage, setReviewPage] = useState(0);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [formOpen, setFormOpen] = useState(false);
+  const [submitMsg, setSubmitMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const { data: summary } = useQuery({
+    queryKey: ['rating-summary', productId],
+    queryFn: () => productApi.getRatingSummary(productId).then((r) => r.data.data),
+    enabled: !!productId,
+    staleTime: 30000,
+  });
+
+  const { data: reviewsData, isLoading: loadingReviews } = useQuery<import('../../types').PagedResponse<import('../../types').ProductReviewDTO> | undefined>({
+    queryKey: ['reviews', productId, reviewPage],
+    queryFn: () => productApi.getReviews(productId, { page: reviewPage, size: REVIEWS_PAGE_SIZE }).then((r) => r.data.data),
+    enabled: !!productId,
+    staleTime: 15000,
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: () => productApi.createReview(productId, { rating: reviewRating, comment: reviewComment }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews', productId] });
+      queryClient.invalidateQueries({ queryKey: ['rating-summary', productId] });
+      setReviewComment('');
+      setReviewRating(5);
+      setFormOpen(false);
+      setSubmitMsg({ type: 'success', text: 'Cảm ơn bạn đã gửi đánh giá! 🎉' });
+      setTimeout(() => setSubmitMsg(null), 4000);
+    },
+    onError: () => {
+      setSubmitMsg({ type: 'error', text: 'Có lỗi xảy ra. Vui lòng thử lại.' });
+      setTimeout(() => setSubmitMsg(null), 4000);
+    },
+  });
+
+  const reviews = reviewsData?.content ?? [];
+  const totalPages = reviewsData?.totalPages ?? 0;
+  const totalElements = reviewsData?.totalElements ?? 0;
+  const avg = summary?.averageRating ?? 0;
+  const ratingCounts = summary?.ratingCounts ?? {};
+
+  function formatDate(iso: string) {
+    try {
+      return new Date(iso).toLocaleDateString('vi-VN', { day: 'numeric', month: 'long', year: 'numeric' });
+    } catch {
+      return iso;
+    }
+  }
+
+  return (
+    <section className="mt-20">
+      {/* Tab bar */}
+      <div className="grid grid-cols-3 border-b border-black/10 text-center text-base text-black/60">
+        {(['Chi tiết sản phẩm', 'Đánh giá & Nhận xét', 'Câu hỏi thường gặp'] as const).map((tab, i) => (
+          <button
+            key={tab}
+            type="button"
+            className={`pb-5 transition-colors ${i === 1 ? 'border-b-2 border-primary font-medium text-primary' : 'hover:text-primary'}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {/* Rating summary */}
+      {summary && (
+        <div className="mt-10 grid gap-8 lg:grid-cols-[220px_1fr]">
+          {/* Big score */}
+          <div className="flex flex-col items-center justify-center rounded-2xl bg-[#F8F8F8] px-6 py-8">
+            <span className="text-6xl font-black text-primary">{avg.toFixed(1)}</span>
+            <div className="mt-2 flex gap-1 text-[#FFC633]">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Star key={s} size={18} fill={s <= Math.round(avg) ? 'currentColor' : 'none'} />
+              ))}
+            </div>
+            <p className="mt-2 text-sm text-black/50">{totalElements} đánh giá</p>
+          </div>
+          {/* Bars */}
+          <div className="flex flex-col justify-center gap-3 py-4">
+            {[5, 4, 3, 2, 1].map((star) => (
+              <RatingBar
+                key={star}
+                label={`${star} ★`}
+                count={Number(ratingCounts[String(star)] ?? 0)}
+                total={summary.reviewCount}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Header row */}
+      <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+        <h2 className="text-2xl font-bold text-primary">
+          Tất cả nhận xét <span className="text-base font-normal text-black/40">({totalElements})</span>
+        </h2>
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={() => setFormOpen((v) => !v)}
+            className="h-12 rounded-full bg-primary px-8 text-sm font-medium text-white transition-colors hover:bg-black/80"
+          >
+            {formOpen ? 'Đóng form' : 'Viết nhận xét'}
+          </button>
+        ) : (
+          <Link
+            to="/login"
+            className="inline-flex h-12 items-center rounded-full border border-black/20 px-8 text-sm font-medium text-primary transition-colors hover:bg-black/5"
+          >
+            Đăng nhập để đánh giá
+          </Link>
+        )}
+      </div>
+
+      {/* Feedback message */}
+      <AnimatePresence>
+        {submitMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className={`mt-4 rounded-lg px-5 py-3 text-sm font-medium ${submitMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}
+          >
+            {submitMsg.text}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Write review form */}
+      <AnimatePresence>
+        {formOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mt-6 rounded-2xl border border-black/10 bg-[#FAFAFA] p-6"
+          >
+            <h3 className="text-lg font-bold text-primary">Viết nhận xét của bạn</h3>
+            <div className="mt-4">
+              <p className="mb-2 text-sm text-black/60">Chọn số sao</p>
+              <ReviewStarPicker value={reviewRating} onChange={setReviewRating} />
+            </div>
+            <div className="mt-4">
+              <p className="mb-2 text-sm text-black/60">Nhận xét của bạn</p>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                rows={4}
+                className="w-full resize-none rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-primary placeholder:text-black/30 focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => submitMutation.mutate()}
+              disabled={submitMutation.isPending}
+              className="mt-4 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-8 text-sm font-medium text-white transition-colors hover:bg-black/80 disabled:opacity-50"
+            >
+              <Send size={16} />
+              {submitMutation.isPending ? 'Đang gửi...' : 'Gửi đánh giá'}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Review cards */}
+      {loadingReviews ? (
+        <div className="mt-8 grid gap-5 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="animate-pulse rounded-2xl border border-black/10 p-7">
+              <div className="h-4 w-24 rounded bg-[#F0EEED]" />
+              <div className="mt-4 h-5 w-32 rounded bg-[#F0EEED]" />
+              <div className="mt-3 h-16 rounded bg-[#F0EEED]" />
+            </div>
+          ))}
+        </div>
+      ) : reviews.length === 0 ? (
+        <div className="mt-12 rounded-2xl border border-dashed border-black/15 py-16 text-center">
+          <Star size={36} className="mx-auto mb-4 text-[#FFC633] opacity-50" />
+          <p className="text-lg font-medium text-primary">Chưa có đánh giá nào</p>
+          <p className="mt-2 text-sm text-black/50">Hãy là người đầu tiên chia sẻ trải nghiệm!</p>
+        </div>
+      ) : (
+        <motion.div
+          className="mt-8 grid gap-5 md:grid-cols-2"
+          initial="hidden"
+          animate="visible"
+          variants={{ visible: { opacity: 1, transition: { staggerChildren: 0.06 } }, hidden: { opacity: 0 } }}
+        >
+          {reviews.map((review: import('../../types').ProductReviewDTO) => (
+            <motion.article
+              key={review.id}
+              variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+              className="rounded-2xl border border-black/10 bg-white p-7 shadow-sm"
+            >
+              {/* Stars */}
+              <div className="flex gap-0.5 text-[#FFC633]">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} size={18} fill={s <= review.rating ? 'currentColor' : 'none'} />
+                ))}
+              </div>
+              {/* Name */}
+              <h3 className="mt-3 flex items-center gap-1.5 text-base font-bold text-primary">
+                {review.userName}
+                <CheckCircle size={16} fill="#01AB31" className="text-white" />
+              </h3>
+              {/* Comment */}
+              {review.comment && (
+                <p className="mt-3 text-sm leading-6 text-black/60">{review.comment}</p>
+              )}
+              {/* Date */}
+              <p className="mt-5 text-xs text-black/35">{formatDate(review.createdAt)}</p>
+            </motion.article>
+          ))}
+        </motion.div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex items-center justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setReviewPage((p) => Math.max(0, p - 1))}
+            disabled={reviewPage === 0}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition-colors hover:bg-black/5 disabled:opacity-30"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setReviewPage(i)}
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors ${reviewPage === i ? 'bg-primary text-white' : 'border border-black/10 hover:bg-black/5'
+                }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setReviewPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={reviewPage >= totalPages - 1}
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 transition-colors hover:bg-black/5 disabled:opacity-30"
+          >
+            <ChevronRightIcon size={18} />
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function RelatedProductCard({ product, index }: { product: ProductDTO; index: number }) {
   const oldPrice = index % 2 === 0 ? Math.round(product.price * 1.3) : null;
+
   return (
     <article className="group">
       <Link to={`/products/${product.id}`} className="block">
@@ -131,11 +448,12 @@ function RelatedProductCard({ product, index }: { product: ProductDTO; index: nu
 
 export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const productColors = useMemo(() => getProductColors(id ?? 'default'), [id]);
   const [quantity, setQuantity] = useState(1);
   const [adding, setAdding] = useState(false);
   const [addedMsg, setAddedMsg] = useState('');
-  const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
-  const [selectedSize, setSelectedSize] = useState('Large');
+  const [selectedColor, setSelectedColor] = useState(() => getProductColors(id ?? 'default')[0].value);
+  const [selectedSize, setSelectedSize] = useState('L');
   const [selectedImage, setSelectedImage] = useState(0);
   const { isAuthenticated, isAdmin } = useAuthStore();
   const queryClient = useQueryClient();
@@ -195,11 +513,8 @@ export default function ProductDetailPage() {
   const oldPrice = data ? Math.round(data.price * 1.32) : null;
   const galleryImages = useMemo(() => {
     if (!data) return [];
-    return [
-      data.imageUrl,
-      'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=900&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=900&auto=format&fit=crop',
-    ];
+    if (data.images && data.images.length > 0) return data.images;
+    return [data.imageUrl];
   }, [data]);
 
   const handleAddToCart = async () => {
@@ -274,9 +589,8 @@ export default function ProductDetailPage() {
                   key={image}
                   type="button"
                   onClick={() => setSelectedImage(index)}
-                  className={`aspect-square overflow-hidden rounded-lg bg-[#F0EEED] ${
-                    selectedImage === index ? 'ring-2 ring-primary' : ''
-                  }`}
+                  className={`aspect-square overflow-hidden rounded-lg bg-[#F0EEED] ${selectedImage === index ? 'ring-2 ring-primary' : ''
+                    }`}
                 >
                   <img src={image} alt={`${data.name} view ${index + 1}`} className="h-full w-full object-cover" />
                 </button>
@@ -305,19 +619,22 @@ export default function ProductDetailPage() {
 
             <div>
               <p className="text-base text-black/60">Chọn màu sắc</p>
-              <div className="mt-4 flex gap-4">
-                {COLORS.map((color) => (
+              <div className="mt-4 flex flex-wrap gap-3">
+                {productColors.map((color) => (
                   <button
                     key={color.value}
                     type="button"
                     onClick={() => setSelectedColor(color.value)}
                     aria-label={color.name}
-                    className={`flex h-9 w-9 items-center justify-center rounded-full border border-black/10 ${
-                      selectedColor === color.value ? 'ring-2 ring-primary ring-offset-2' : ''
-                    }`}
+                    title={color.name}
+                    className={`flex h-9 w-9 items-center justify-center rounded-full transition-transform hover:scale-110 ${color.value === '#FFFFFF' ? 'border border-black/20' : 'border border-transparent'
+                      } ${selectedColor === color.value ? 'ring-2 ring-primary ring-offset-2' : ''
+                      }`}
                     style={{ backgroundColor: color.value }}
                   >
-                    {selectedColor === color.value && <CheckCircle size={18} className="text-white" />}
+                    {selectedColor === color.value && (
+                      <CheckCircle size={16} className={color.value === '#FFFFFF' || color.value === '#F5DD06' ? 'text-black/60' : 'text-white'} />
+                    )}
                   </button>
                 ))}
               </div>
@@ -333,9 +650,8 @@ export default function ProductDetailPage() {
                     key={size}
                     type="button"
                     onClick={() => setSelectedSize(size)}
-                    className={`rounded-full px-6 py-3 text-sm transition-colors ${
-                      selectedSize === size ? 'bg-primary text-white' : 'bg-[#F0F0F0] text-black/60 hover:text-primary'
-                    }`}
+                    className={`rounded-full px-6 py-3 text-sm transition-colors ${selectedSize === size ? 'bg-primary text-white' : 'bg-[#F0F0F0] text-black/60 hover:text-primary'
+                      }`}
                   >
                     {size}
                   </button>
@@ -383,9 +699,8 @@ export default function ProductDetailPage() {
             )}
 
             {addedMsg && (
-              <div className={`mt-4 rounded-lg p-3 text-center text-sm font-medium ${
-                addedMsg.includes('Added') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-              }`}>
+              <div className={`mt-4 rounded-lg p-3 text-center text-sm font-medium ${addedMsg.includes('Added') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                }`}>
                 {addedMsg}
               </div>
             )}
@@ -398,43 +713,7 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        <section className="mt-20">
-          <div className="grid grid-cols-3 border-b border-black/10 text-center text-base text-black/60">
-            {['Chi tiết sản phẩm', 'Đánh giá & Nhận xét', 'Câu hỏi thường gặp'].map((tab, index) => (
-              <button
-                key={tab}
-                type="button"
-                className={`pb-5 ${index === 1 ? 'border-b-2 border-primary font-medium text-primary' : ''}`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-8 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-primary">Tất cả nhận xét</h2>
-              <p className="mt-1 text-sm text-black/60">451 đánh giá đã xác minh</p>
-            </div>
-            <button type="button" className="h-12 rounded-full bg-primary px-8 text-sm font-medium text-white">
-              Viết nhận xét
-            </button>
-          </div>
-
-          <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {REVIEWS.map((review) => (
-              <article key={review.name} className="rounded-lg border border-black/10 p-7">
-                <Rating value={5} size={20} />
-                <h3 className="mt-4 flex items-center gap-1 text-xl font-bold text-primary">
-                  {review.name}
-                  <CheckCircle size={18} fill="#01AB31" className="text-white" />
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-black/60">{review.text}</p>
-                <p className="mt-6 text-sm font-medium text-black/60">Đăng vào ngày 7 tháng 5, 2026</p>
-              </article>
-            ))}
-          </div>
-        </section>
+        <ReviewSection productId={id!} isAuthenticated={isAuthenticated()} />
 
         <section className="py-20">
           <h2 className="text-center text-4xl font-black leading-tight text-primary md:text-5xl">CÓ THỂ BẠN CŨNG THÍCH</h2>

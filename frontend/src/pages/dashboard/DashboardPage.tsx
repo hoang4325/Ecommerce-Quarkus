@@ -6,7 +6,7 @@ import { orderApi } from '../../api/endpoints/orderApi';
 import { notificationApi } from '../../api/endpoints/notificationApi';
 import { useAuthStore } from '../../auth/authStore';
 
-const formatPrice = (price: number) => `$${Math.round(price / 10000)}`;
+const formatPrice = (price: number) => `${price.toLocaleString('vi-VN')} đ`;
 
 const DashboardPage = () => {
   const { user, isAdmin } = useAuthStore();

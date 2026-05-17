@@ -78,11 +78,11 @@ export default function Header() {
           {/* Category nav — desktop */}
           <nav className="hidden lg:flex items-center gap-6 text-sm text-primary">
             <Link to="/products" className="inline-flex items-center gap-1.5 transition-colors hover:text-black/60">
-              Shop <ChevronDown size={14} />
+              Sản phẩm <ChevronDown size={14} />
             </Link>
-            <Link to="/products?sort=sale" className="transition-colors hover:text-black/60">On Sale</Link>
-            <Link to="/products?sort=new" className="transition-colors hover:text-black/60">New Arrivals</Link>
-            <Link to="/products?brands=all" className="transition-colors hover:text-black/60">Brands</Link>
+            <Link to="/products?sort=sale" className="transition-colors hover:text-black/60">Giảm giá</Link>
+            <Link to="/products?sort=new" className="transition-colors hover:text-black/60">Hàng mới về</Link>
+            <Link to="/products?brands=all" className="transition-colors hover:text-black/60">Thương hiệu</Link>
           </nav>
 
           {/* Search - desktop */}
@@ -93,7 +93,7 @@ export default function Header() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search for products..."
+                placeholder="Tìm kiếm sản phẩm..."
                 className="w-full rounded-full bg-[#F0F0F0] py-3 pl-12 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-black/10"
               />
             </div>

@@ -3,38 +3,38 @@ import { Mail } from 'lucide-react';
 
 const FOOTER_COLUMNS = [
   {
-    title: 'Company',
-    links: ['About', 'Features', 'Works', 'Career'],
+    title: 'Công ty',
+    links: ['Giới thiệu', 'Tính năng', 'Hoạt động', 'Tuyển dụng'],
   },
   {
-    title: 'Help',
-    links: ['Customer Support', 'Delivery Details', 'Terms & Conditions', 'Privacy Policy'],
+    title: 'Trợ giúp',
+    links: ['Hỗ trợ khách hàng', 'Chi tiết giao hàng', 'Điều khoản', 'Chính sách bảo mật'],
   },
   {
-    title: 'FAQ',
-    links: ['Account', 'Manage Deliveries', 'Orders', 'Payments'],
+    title: 'Hỏi đáp',
+    links: ['Tài khoản', 'Quản lý giao hàng', 'Đơn hàng', 'Thanh toán'],
   },
   {
-    title: 'Resources',
-    links: ['Free eBooks', 'Development Tutorial', 'How to Blog', 'Youtube Playlist'],
+    title: 'Tài nguyên',
+    links: ['Ebooks miễn phí', 'Hướng dẫn phát triển', 'Cách viết blog', 'Danh sách Youtube'],
   },
 ];
 
 export default function Footer() {
   return (
-    <footer className="mt-16 bg-[#F0F0F0] text-black/60">
+    <footer className="mt-24 md:mt-32 bg-[#F0F0F0] text-black/60">
       <div className="container-shop">
         <div className="-translate-y-1/2 rounded-lg bg-primary px-6 py-8 text-white md:px-16 md:py-9">
           <div className="grid gap-7 md:grid-cols-[1fr_350px] md:items-center lg:grid-cols-[1fr_420px]">
             <h2 className="max-w-[560px] text-3xl font-black leading-tight md:text-[40px]">
-              STAY UPTO DATE ABOUT OUR LATEST OFFERS
+              NHẬN THÔNG TIN MỚI NHẤT VỀ CÁC ƯU ĐÃI
             </h2>
             <form className="space-y-3">
               <div className="relative">
                 <Mail size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40" />
                 <input
                   type="email"
-                  placeholder="Enter your email address"
+                  placeholder="Nhập địa chỉ email của bạn"
                   className="h-12 w-full rounded-full bg-white pl-12 pr-5 text-sm text-primary placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-white/40"
                 />
               </div>
@@ -42,7 +42,7 @@ export default function Footer() {
                 type="submit"
                 className="h-12 w-full rounded-full bg-white px-5 text-sm font-medium text-primary transition-colors hover:bg-white/90"
               >
-                Subscribe to Newsletter
+                Đăng ký nhận tin
               </button>
             </form>
           </div>
@@ -54,7 +54,7 @@ export default function Footer() {
               SHOP.CO
             </Link>
             <p className="mt-5 text-sm leading-6">
-              We have clothes that suit your style and which you are proud to wear. From women to men.
+              Chúng tôi mang đến những bộ trang phục phù hợp với phong cách và giúp bạn tự tin. Dành cho cả nam và nữ.
             </p>
             <div className="mt-7 flex gap-3">
               {['X', 'FB', 'IG', 'GH'].map((item) => (
@@ -86,7 +86,7 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 py-6 text-sm md:flex-row">
-          <p>Shop.co © 2000-2026, All Rights Reserved</p>
+          <p>Shop.co © 2000-2026, Bảo lưu mọi quyền</p>
           <div className="flex gap-3">
             {['VISA', 'MC', 'PAYPAL', 'APPLE', 'GPAY'].map((method) => (
               <span key={method} className="rounded border border-black/10 bg-white px-3 py-1 text-xs font-bold text-primary shadow-sm">

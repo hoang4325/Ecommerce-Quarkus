@@ -15,7 +15,7 @@ const CART_IMAGES = [
 ];
 
 function formatPrice(price: number) {
-  return `$${Math.round(price / 10000)}`;
+  return `${price.toLocaleString('vi-VN')} đ`;
 }
 
 export default function OrderDetailPage() {
@@ -178,7 +178,7 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="flex justify-between text-base">
                   <span className="text-black/60">Phí giao hàng</span>
-                  <span className="font-bold text-primary">$0</span>
+                  <span className="font-bold text-primary">0 đ</span>
                 </div>
                 <div className="flex justify-between border-t border-black/10 pt-5">
                   <span className="text-xl text-primary">Tổng cộng</span>

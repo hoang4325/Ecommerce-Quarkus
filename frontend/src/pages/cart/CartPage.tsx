@@ -18,7 +18,7 @@ const CART_IMAGES = [
 const DEMO_ITEMS: CartItemDTO[] = [];
 
 function formatPrice(price: number) {
-  return `$${Math.round(price / 10000)}`;
+  return `${price.toLocaleString('vi-VN')} đ`;
 }
 
 function CartLineItem({

@@ -10,7 +10,7 @@ import EmptyState from '../../components/ui/EmptyState';
 import type { OrderDTO } from '../../types';
 
 function formatPrice(price: number) {
-  return `$${Math.round(price / 10000)}`;
+  return `${price.toLocaleString('vi-VN')} đ`;
 }
 
 export default function OrderListPage() {
