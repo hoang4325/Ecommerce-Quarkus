@@ -1,45 +1,30 @@
----
-# ═══════════════════════════════════════════════════════════════════════════════
-# ConfigMap — Non-sensitive shared configuration
-# TODO: Update all values marked with TODO before deploying
-# ═══════════════════════════════════════════════════════════════════════════════
+# =============================================================================
+# ConfigMap — Non-sensitive service configuration
+# =============================================================================
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ecommerce-config
-  namespace: ecommerce   # TODO: change if needed
-  labels:
-    app.kubernetes.io/part-of: ecommerce
+  namespace: ecommerce
 data:
   # ── Database ────────────────────────────────────────────────────────────────
-  DB_HOST: "postgres-service"           # TODO: use your PostgreSQL service name or external host
-  DB_PORT: "5432"
-  DB_NAME_PRODUCT: "product_db"
-  DB_NAME_ORDER: "order_db"
-  DB_NAME_CART: "cart_db"
-  DB_NAME_INVENTORY: "inventory_db"
-  DB_NAME_NOTIFICATION: "notification_db"
-  DB_NAME_PAYMENT: "payment_db"
-  DB_NAME_USER: "user_db"
+  POSTGRES_HOST: "postgres"
+  POSTGRES_PORT: "5432"
 
   # ── Keycloak ────────────────────────────────────────────────────────────────
-  KEYCLOAK_URL: "http://keycloak-service:8080"  # TODO: update to your Keycloak URL
+  KEYCLOAK_URL: "http://keycloak:8080"
   KEYCLOAK_REALM: "ecommerce"
+  KEYCLOAK_OIDC_URL: "http://keycloak:8080/realms/ecommerce"
 
   # ── Kafka ───────────────────────────────────────────────────────────────────
-  KAFKA_BOOTSTRAP_SERVERS: "kafka-service:9092"  # TODO: update to your Kafka service
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
 
-  # ── Service internal URLs (k8s DNS) ─────────────────────────────────────────
-  PRODUCT_SERVICE_URL: "http://product-service:8085"
-  CART_SERVICE_URL: "http://cart-service:8086"
-  ORDER_SERVICE_URL: "http://order-service:8087"
-  AUTH_SERVICE_URL: "http://auth-service:8082"
-  INVENTORY_SERVICE_URL: "http://inventory-service:8088"
-  PAYMENT_SERVICE_URL: "http://payment-service:8089"
-  NOTIFICATION_SERVICE_URL: "http://notification-service:8090"
-  USER_SERVICE_URL: "http://user-service:8091"
-
-  # ── App settings ────────────────────────────────────────────────────────────
-  QUARKUS_LOG_LEVEL: "INFO"
-  QUARKUS_HTTP_CORS: "true"
-  QUARKUS_HTTP_CORS_ORIGINS: "https://ecommerce.example.com"  # TODO: update domain
+  # ── Service-to-service URLs (used by api-gateway) ──────────────────────────
+  AUTH_SERVICE_URL:         "http://auth-service:8082"
+  PRODUCT_SERVICE_URL:      "http://product-service:8083"
+  CART_SERVICE_URL:         "http://cart-service:8084"
+  ORDER_SERVICE_URL:        "http://order-service:8085"
+  INVENTORY_SERVICE_URL:    "http://inventory-service:8087"
+  PAYMENT_SERVICE_URL:      "http://payment-service:8088"
+  NOTIFICATION_SERVICE_URL: "http://notification-service:8089"
+  USER_SERVICE_URL:         "http://user-service:8090"

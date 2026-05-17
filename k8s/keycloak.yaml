@@ -1,0 +1,99 @@
+# =============================================================================
+# Keycloak — Identity & Access Management
+# =============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  namespace: ecommerce
+  labels:
+    app: keycloak
+    app.kubernetes.io/part-of: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - "until nc -z postgres 5432; do echo 'Waiting for postgres...'; sleep 3; done"
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:24.0.5
+          args: ["start-dev"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KC_DB
+              value: postgres
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://postgres:5432/keycloak_db"
+            - name: KC_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-db-secret
+                  key: db-username
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-db-secret
+                  key: db-password
+            - name: KC_BOOTSTRAP_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-db-secret
+                  key: keycloak-admin-username
+            - name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ecommerce-db-secret
+                  key: keycloak-admin-password
+            - name: KC_HTTP_PORT
+              value: "8080"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+          readinessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /realms/master
+              port: 8080
+            initialDelaySeconds: 120
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+  namespace: ecommerce
+  labels:
+    app: keycloak
+spec:
+  selector:
+    app: keycloak
+  ports:
+    - port: 8080
+      targetPort: 8080

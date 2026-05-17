@@ -10,7 +10,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ${{ github.repository_owner }}/ecommerce
-
+  K8S_NAMESPACE: ecommerce
   JAVA_VERSION: '17'
   NODE_VERSION: '22'
 
@@ -30,23 +30,23 @@ jobs:
       matrix:
         service:
           - name: api-gateway
-            port: 8083
-          - name: product-service
-            port: 8085
-          - name: cart-service
             port: 8086
+          - name: product-service
+            port: 8083
+          - name: cart-service
+            port: 8084
           - name: order-service
-            port: 8087
+            port: 8085
           - name: auth-service
             port: 8082
           - name: inventory-service
-            port: 8088
+            port: 8087
           - name: payment-service
-            port: 8089
+            port: 8088
           - name: notification-service
-            port: 8090
+            port: 8089
           - name: user-service
-            port: 8091
+            port: 8090
 
     steps:
       - name: Checkout code
@@ -128,7 +128,6 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
-          # TODO: Update this to your api-gateway public URL
           VITE_API_BASE_URL: /api
 
       - name: Log in to GitHub Container Registry
@@ -159,11 +158,11 @@ jobs:
           cache-to: type=gha,mode=max,scope=frontend
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 3: Deploy to Production (Docker Compose over SSH)
+  # JOB 3: Deploy to Kubernetes
   # ─────────────────────────────────────────────────────────────────────────────
   deploy:
-    name: Deploy via Docker Compose (SSH)
-    runs-on: ubuntu-latest
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest           # ← GitHub-hosted runner (no self-hosted needed)
     needs: [ build-backend, build-frontend ]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
@@ -173,72 +172,116 @@ jobs:
 
     environment:
       name: production
-      url: http://${{ secrets.SSH_HOST }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ── Setup SSH key ─────────────────────────────────────────────────────────
-      - name: Configure SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+      # ── Install kubectl ───────────────────────────────────────────────────────
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.29.0'
 
-      # ── Copy docker-compose.yml to server ─────────────────────────────────────
-      - name: Upload docker-compose.yml to server
+      # ── Configure kubeconfig from GitHub Secret ───────────────────────────────
+      # Add secret: KUBE_CONFIG = base64 content of your ~/.kube/config
+      # Run: cat ~/.kube/config | base64 -w 0
+      - name: Configure kubeconfig
         run: |
-          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            docker-compose.yml \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/ecommerce/docker-compose.yml
+          mkdir -p $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+          chmod 600 $HOME/.kube/config
 
-      # ── Pull latest images & restart services ─────────────────────────────────
-      - name: Deploy on server via SSH
+      # ── Verify cluster connectivity ───────────────────────────────────────────
+      - name: Verify cluster connectivity
+        run: kubectl cluster-info --request-timeout=15s
+
+      # ── Apply namespace first ─────────────────────────────────────────────────
+      - name: Create namespace (idempotent)
+        run: kubectl apply -f k8s/namespace.yaml
+
+      # ── Create GHCR image pull secret ─────────────────────────────────────────
+      - name: Create image pull secret for GHCR
+        run: |
+          kubectl create secret docker-registry ghcr-pull-secret \
+            --docker-server=${{ env.REGISTRY }} \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --namespace=${{ env.K8S_NAMESPACE }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # ── Apply ConfigMaps & Secrets ────────────────────────────────────────────
+      - name: Apply ConfigMaps & Secrets
+        run: |
+          kubectl apply -f k8s/secret.yaml    -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/configmap.yaml -n ${{ env.K8S_NAMESPACE }}
+
+      # ── Apply infrastructure (Postgres, Kafka, Keycloak) ─────────────────────
+      - name: Deploy infrastructure
+        run: |
+          kubectl apply -f k8s/postgres.yaml  -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/kafka.yaml     -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/keycloak.yaml  -n ${{ env.K8S_NAMESPACE }}
+
+      # ── Substitute image tag & registry in all service manifests ─────────────
+      - name: Inject image tag into manifests
         env:
-          REGISTRY: ${{ env.REGISTRY }}
-          IMAGE_PREFIX: ${{ env.IMAGE_PREFIX }}
           IMAGE_TAG: ${{ github.sha }}
-          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GHCR_USER: ${{ github.actor }}
+          IMAGE_REGISTRY: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'ENDSSH'
-            set -e
-            cd ~/ecommerce
+          # Replace placeholders in all k8s YAML files
+          find k8s/ -name "*.yaml" | xargs sed -i \
+            -e "s|IMAGE_TAG|${IMAGE_TAG}|g" \
+            -e "s|IMAGE_REGISTRY|${IMAGE_REGISTRY}|g"
 
-            # Login to GHCR
-            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
-
-            # Pull all latest images
-            IMAGE_TAG=$IMAGE_TAG docker compose pull
-
-            # Restart containers with zero-downtime rolling update
-            IMAGE_TAG=$IMAGE_TAG docker compose up -d --remove-orphans
-
-            # Prune old dangling images to save disk space
-            docker image prune -f
-
-            echo "✅ Deployment complete!"
-          ENDSSH
-
-      # ── Health check ─────────────────────────────────────────────────────────
-      - name: Verify deployment (health check)
+      # ── Deploy all backend microservices ──────────────────────────────────────
+      - name: Deploy microservices
         run: |
-          sleep 15
-          echo "Checking frontend..."
-          curl --fail --max-time 10 http://${{ secrets.SSH_HOST }}:3000 \
-            && echo "✅ Frontend is up" \
-            || echo "⚠️ Frontend health check failed (may still be starting)"
+          kubectl apply -f k8s/auth-service.yaml         -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/product-service.yaml      -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/cart-service.yaml         -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/order-service.yaml        -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/inventory-service.yaml    -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/payment-service.yaml      -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/notification-service.yaml -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/user-service.yaml         -n ${{ env.K8S_NAMESPACE }}
+          kubectl apply -f k8s/api-gateway.yaml          -n ${{ env.K8S_NAMESPACE }}
 
-          echo "Checking API Gateway..."
-          curl --fail --max-time 10 http://${{ secrets.SSH_HOST }}:8086/q/health \
-            && echo "✅ API Gateway is up" \
-            || echo "⚠️ API Gateway health check failed (may still be starting)"
+      # ── Deploy frontend ───────────────────────────────────────────────────────
+      - name: Deploy frontend
+        run: |
+          kubectl apply -f k8s/frontend.yaml -n ${{ env.K8S_NAMESPACE }}
+
+      # ── Wait for critical deployments to be ready ─────────────────────────────
+      - name: Wait for rollouts
+        run: |
+          echo "⏳ Waiting for api-gateway..."
+          kubectl rollout status deployment/api-gateway \
+            -n ${{ env.K8S_NAMESPACE }} --timeout=120s
+
+          echo "⏳ Waiting for frontend..."
+          kubectl rollout status deployment/frontend \
+            -n ${{ env.K8S_NAMESPACE }} --timeout=60s
+
+      # ── Final status report ───────────────────────────────────────────────────
+      - name: Verify running pods
+        run: |
+          echo "=== Pods ==="
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }} \
+            -l app.kubernetes.io/part-of=ecommerce
+
+          echo "=== Services ==="
+          kubectl get services -n ${{ env.K8S_NAMESPACE }}
+
+          echo "=== Ingress ==="
+          kubectl get ingress -n ${{ env.K8S_NAMESPACE }}
 
       # ── Notify on failure ─────────────────────────────────────────────────────
       - name: Notify on failure
         if: failure()
         run: |
-          echo "❌ Deployment failed! Check the logs above."
+          echo "❌ Deployment failed! Recent cluster events:"
+          kubectl get events -n ${{ env.K8S_NAMESPACE }} \
+            --sort-by='.lastTimestamp' | tail -30
+          echo "=== Pod status ==="
+          kubectl get pods -n ${{ env.K8S_NAMESPACE }} -o wide
