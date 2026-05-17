@@ -324,6 +324,8 @@ export default function ProductListPage() {
   const selectedSize = searchParams.get('size') ?? '';
   const selectedColor = searchParams.get('color') ?? '';
   const selectedStyle = searchParams.get('style') ?? '';
+  const sort = searchParams.get('sort') ?? ''; // 'sale' | 'new' | ''
+  const brands = searchParams.get('brands') ?? ''; // 'all';
 
   // Fetch ALL products for category/search, then filter client-side
   const { data: productsData, isLoading } = useQuery({
@@ -351,23 +353,43 @@ export default function ProductListPage() {
   const allProducts = productsData?.content ?? [];
 
   const filteredProducts = useMemo(() => {
-    return allProducts.filter((product) => {
+    let list = allProducts.filter((product) => {
       if (product.price < priceMin || product.price > priceMax) return false;
       if (!matchColor(product.color, selectedColor)) return false;
       if (!matchSize(product.productSize, selectedSize)) return false;
       if (!matchStyle(product.dressStyle, selectedStyle)) return false;
       return true;
     });
-  }, [allProducts, priceMin, priceMax, selectedColor, selectedSize, selectedStyle]);
+
+    // sort=new: sort by createdAt descending
+    if (sort === 'new') {
+      list = [...list].sort((a, b) => {
+        const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return db - da;
+      });
+    }
+    // sort=sale: only products with price < average (simulate discounted)
+    if (sort === 'sale') {
+      const avg = list.reduce((s, p) => s + p.price, 0) / (list.length || 1);
+      list = list.filter((p) => p.price < avg);
+    }
+
+    return list;
+  }, [allProducts, priceMin, priceMax, selectedColor, selectedSize, selectedStyle, sort]);
 
   const totalElements = filteredProducts.length;
   const totalPages = Math.max(1, Math.ceil(totalElements / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
   const products = filteredProducts.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
 
+  // Page title label
   const activeCategoryName = useMemo(() => {
+    if (sort === 'new') return 'Hàng mới về';
+    if (sort === 'sale') return 'Giảm giá';
+    if (brands === 'all') return 'Thương hiệu';
     return categories.find((c) => c.id === categoryId)?.name ?? search ?? '';
-  }, [categories, categoryId, search]);
+  }, [categories, categoryId, search, sort, brands]);
 
   const setParam = (key: string, value: string) => {
     const next = new URLSearchParams(searchParams);
@@ -442,9 +464,7 @@ export default function ProductListPage() {
                 {activeCategoryName || 'Sản phẩm'}
               </h1>
               <div className="flex items-center gap-3">
-                <p className="hidden text-sm text-black/60 sm:block">
-                  Hiển thị {products.length > 0 ? safePage * PAGE_SIZE + 1 : 0}-{Math.min((safePage + 1) * PAGE_SIZE, totalElements)} trong {totalElements} Sản phẩm
-                </p>
+
                 <button
                   type="button"
                   onClick={() => setSidebarOpen(true)}
@@ -518,6 +538,7 @@ export default function ProductListPage() {
             ) : (
               <>
                 <motion.div
+                  key={safePage}
                   variants={{ visible: { opacity: 1, transition: { staggerChildren: 0.07 } }, hidden: { opacity: 0 } }}
                   initial="hidden"
                   animate="visible"

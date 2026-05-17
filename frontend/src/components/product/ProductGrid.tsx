@@ -29,7 +29,7 @@ export default function ProductGrid({ children, cols = 4 }: ProductGridProps) {
       variants={containerVariants}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: "-50px" }}
+      viewport={{ once: false, margin: "-50px" }}
     >
       {children}
     </motion.div>

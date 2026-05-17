@@ -352,7 +352,8 @@ function ReviewSection({ productId, isAuthenticated }: { productId: string; isAu
         <motion.div
           className="mt-8 grid gap-5 md:grid-cols-2"
           initial="hidden"
-          animate="visible"
+          whileInView="visible"
+          viewport={{ once: false, margin: '-50px' }}
           variants={{ visible: { opacity: 1, transition: { staggerChildren: 0.06 } }, hidden: { opacity: 0 } }}
         >
           {reviews.map((review: import('../../types').ProductReviewDTO) => (

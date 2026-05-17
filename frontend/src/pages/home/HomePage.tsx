@@ -6,15 +6,7 @@ import { productApi } from '../../api/endpoints/productApi';
 import type { ProductDTO } from '../../types';
 
 const HERO_IMAGE =
-  'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1200&auto=format&fit=crop';
-
-const STATS = [
-  { value: '200+', label: 'Thương hiệu quốc tế' },
-  { value: '2,000+', label: 'Sản phẩm chất lượng cao' },
-  { value: '30,000+', label: 'Khách hàng hài lòng' },
-];
-
-const BRAND_LOGOS = ['VERSACE', 'ZARA', 'GUCCI', 'PRADA', 'Calvin Klein'];
+  'https://theme.hstatic.net/200000690725/1001078549/14/slide_1_img.jpg?v=1077';
 
 const FALLBACK_PRODUCTS: ProductDTO[] = [];
 
@@ -129,7 +121,7 @@ function ProductSection({
         variants={fadeInUp}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
+        viewport={{ once: false, margin: '-80px' }}
         className="text-center text-4xl font-black leading-tight text-primary md:text-5xl"
       >
         {title}
@@ -138,7 +130,7 @@ function ProductSection({
         variants={staggerContainer}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-80px' }}
+        viewport={{ once: false, margin: '-80px' }}
         className="mt-10 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4"
       >
         {products.map((product, index) => (
@@ -174,64 +166,17 @@ export default function HomePage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.45 }}>
-      <section className="relative overflow-hidden bg-[#F2F0F1]">
-        <div className="container-shop grid min-h-[520px] items-center gap-8 py-10 md:grid-cols-[0.95fr_1.05fr] md:py-0">
-          <motion.div
-            className="relative z-10 max-w-[610px]"
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.h1 variants={fadeInUp} className="max-w-[580px] text-[42px] font-black leading-[0.95] tracking-normal text-primary sm:text-6xl lg:text-[64px]">
-              TÌM TRANG PHỤC
-              <br />
-              PHÙ HỢP VỚI
-              <br />
-              PHONG CÁCH CỦA BẠN
-            </motion.h1>
-            <motion.p variants={fadeInUp} className="mt-6 max-w-[545px] text-sm leading-6 text-black/60">
-              Khám phá bộ sưu tập đa dạng các trang phục được chế tác tỉ mỉ của chúng tôi, được thiết kế để tôn lên cá tính và đáp ứng phong cách thời trang của bạn.
-            </motion.p>
-            <motion.div variants={fadeInUp}>
-              <Link to="/products" className="mt-7 inline-flex h-[52px] min-w-[210px] items-center justify-center rounded-full bg-primary px-9 py-4 text-sm font-semibold text-white transition-colors hover:bg-black/80">
-                Mua ngay
-              </Link>
-            </motion.div>
-            <motion.div variants={fadeInUp} className="mt-10 grid max-w-[610px] grid-cols-3 divide-x divide-black/10">
-              {STATS.map((item) => (
-                <div key={item.label} className="px-4 first:pl-0">
-                  <p className="text-2xl font-bold leading-none text-primary sm:text-[40px]">{item.value}</p>
-                  <p className="mt-2 text-xs text-black/60 sm:text-base">{item.label}</p>
-                </div>
-              ))}
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            className="relative min-h-[390px] self-end md:min-h-[520px]"
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-          >
+      <section className="relative overflow-hidden w-full bg-white">
+        <Link to="/products" className="block relative w-full group">
+          <div className="w-full relative aspect-[16/9] md:aspect-[21/9] lg:aspect-[25/9]">
             <img
               src={HERO_IMAGE}
-              alt="Fashion models wearing contemporary streetwear"
-              className="absolute bottom-0 left-1/2 h-full w-[115%] max-w-none -translate-x-1/2 object-cover object-[50%_20%] mix-blend-multiply md:w-full"
+              alt="Torano Banner"
+              className="absolute inset-0 w-full h-full object-cover object-center"
             />
-            <span className="absolute right-[8%] top-[12%] h-20 w-20 rotate-45 bg-primary [clip-path:polygon(50%_0,62%_38%,100%_50%,62%_62%,50%_100%,38%_62%,0_50%,38%_38%)] md:h-24 md:w-24" />
-            <span className="absolute left-[8%] top-[42%] h-10 w-10 rotate-45 bg-primary [clip-path:polygon(50%_0,62%_38%,100%_50%,62%_62%,50%_100%,38%_62%,0_50%,38%_38%)] md:h-12 md:w-12" />
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="bg-primary">
-        <div className="container-shop flex min-h-[92px] flex-wrap items-center justify-center gap-x-14 gap-y-5 py-5 text-white lg:justify-between">
-          {BRAND_LOGOS.map((brand) => (
-            <span key={brand} className="font-serif text-2xl font-bold leading-none tracking-tight sm:text-3xl lg:text-[34px]">
-              {brand}
-            </span>
-          ))}
-        </div>
+            <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          </div>
+        </Link>
       </section>
 
       {isLoading ? (
@@ -251,7 +196,7 @@ export default function HomePage() {
             variants={fadeInUp}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: false, margin: '-80px' }}
             className="text-center text-4xl font-black leading-tight text-primary md:text-5xl"
           >
             TÌM THEO PHONG CÁCH
@@ -260,7 +205,7 @@ export default function HomePage() {
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
+            viewport={{ once: false, margin: '-80px' }}
             className="mt-10 grid auto-rows-[190px] grid-cols-1 gap-5 md:grid-cols-3 lg:auto-rows-[250px]"
           >
             {DRESS_STYLES.map((style) => (
@@ -295,7 +240,7 @@ export default function HomePage() {
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={{ once: false, margin: '-80px' }}
           className="mt-10 grid gap-5 md:grid-cols-3"
         >
           {REVIEWS.map((review) => (

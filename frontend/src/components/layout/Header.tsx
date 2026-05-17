@@ -14,6 +14,8 @@ export default function Header() {
   const [search, setSearch] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
+  const categoryMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, isAuthenticated, isAdmin, logout } = useAuthStore();
   const userMenuRef = useRef<HTMLDivElement>(null);
@@ -61,6 +63,9 @@ export default function Header() {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (categoryMenuRef.current && !categoryMenuRef.current.contains(e.target as Node)) {
+        setCategoryMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -77,9 +82,47 @@ export default function Header() {
 
           {/* Category nav — desktop */}
           <nav className="hidden lg:flex items-center gap-6 text-sm text-primary">
-            <Link to="/products" className="inline-flex items-center gap-1.5 transition-colors hover:text-black/60">
-              Sản phẩm <ChevronDown size={14} />
-            </Link>
+            {/* Dropdown Sản phẩm */}
+            <div className="relative" ref={categoryMenuRef}>
+              <button
+                onClick={() => setCategoryMenuOpen(!categoryMenuOpen)}
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-black/60"
+              >
+                Sản phẩm
+                <motion.span animate={{ rotate: categoryMenuOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                  <ChevronDown size={14} />
+                </motion.span>
+              </button>
+              <AnimatePresence>
+                {categoryMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
+                    className="absolute left-0 top-full mt-2 w-52 bg-white shadow-xl border border-black/8 rounded-xl z-50 overflow-hidden"
+                  >
+                    <Link
+                      to="/products"
+                      onClick={() => setCategoryMenuOpen(false)}
+                      className="block px-4 py-3 text-sm font-semibold text-primary border-b border-black/5 hover:bg-black/5 transition-colors"
+                    >
+                      Tất cả sản phẩm
+                    </Link>
+                    {categories.map((cat) => (
+                      <Link
+                        key={cat.id}
+                        to={`/products?category=${cat.id}`}
+                        onClick={() => setCategoryMenuOpen(false)}
+                        className="block px-4 py-2.5 text-sm text-black/70 hover:bg-black/5 hover:text-primary transition-colors"
+                      >
+                        {cat.name}
+                      </Link>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
             <Link to="/products?sort=sale" className="transition-colors hover:text-black/60">Giảm giá</Link>
             <Link to="/products?sort=new" className="transition-colors hover:text-black/60">Hàng mới về</Link>
             <Link to="/products?brands=all" className="transition-colors hover:text-black/60">Thương hiệu</Link>
