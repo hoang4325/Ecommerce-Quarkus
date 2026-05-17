@@ -1,6 +1,4 @@
-# =============================================================================
-# Apache Kafka (KRaft mode — no Zookeeper needed)
-# =============================================================================
+# Kafka KRaft — local K8s
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +6,6 @@ metadata:
   namespace: ecommerce
   labels:
     app: kafka
-    app.kubernetes.io/part-of: ecommerce
 spec:
   replicas: 1
   selector:
@@ -31,7 +28,7 @@ spec:
             - name: KAFKA_PROCESS_ROLES
               value: "broker,controller"
             - name: KAFKA_CONTROLLER_QUORUM_VOTERS
-              value: "1@kafka:9093"
+              value: "1@localhost:9093"
             - name: KAFKA_LISTENERS
               value: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
             - name: KAFKA_ADVERTISED_LISTENERS
@@ -52,18 +49,9 @@ spec:
               value: "/tmp/kraft-combined-logs"
             - name: CLUSTER_ID
               value: "MkU3OEVBNTcwNTJENDM2Qg"
-          readinessProbe:
-            exec:
-              command:
-                - sh
-                - -c
-                - "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 10
           resources:
             requests:
-              cpu: "250m"
+              cpu: "200m"
               memory: "512Mi"
             limits:
               cpu: "500m"
@@ -74,8 +62,6 @@ kind: Service
 metadata:
   name: kafka
   namespace: ecommerce
-  labels:
-    app: kafka
 spec:
   selector:
     app: kafka

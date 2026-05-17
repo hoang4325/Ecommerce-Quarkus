@@ -1,91 +1,42 @@
-# =============================================================================
-# Auth Service — port 8082
-# =============================================================================
+# Auth Service — local K8s (port 8082)
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-service
   namespace: ecommerce
-  labels:
-    app: auth-service
-    app.kubernetes.io/part-of: ecommerce
+  labels: { app: auth-service }
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: auth-service
+    matchLabels: { app: auth-service }
   template:
     metadata:
-      labels:
-        app: auth-service
+      labels: { app: auth-service }
     spec:
       initContainers:
-        - name: wait-for-keycloak
+        - name: wait-deps
           image: busybox:1.36
-          command: ["sh", "-c", "until nc -z keycloak 8080; do echo 'Waiting for keycloak...'; sleep 5; done"]
+          command: ["sh", "-c", "until nc -z keycloak 8080; do sleep 5; done"]
       containers:
         - name: auth-service
-          image: IMAGE_REGISTRY/auth-service:IMAGE_TAG
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 8082
+          image: ecommerce/auth-service:latest
+          imagePullPolicy: Never
+          ports: [{ containerPort: 8082 }]
           env:
-            - name: QUARKUS_DATASOURCE_JDBC_URL
-              value: "jdbc:postgresql://postgres:5432/auth_db"
-            - name: QUARKUS_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: ecommerce-db-secret
-                  key: db-username
-            - name: QUARKUS_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: ecommerce-db-secret
-                  key: db-password
-            - name: QUARKUS_OIDC_AUTH_SERVER_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: ecommerce-config
-                  key: KEYCLOAK_OIDC_URL
-            - name: QUARKUS_REST_CLIENT_KEYCLOAK_ADMIN_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: ecommerce-config
-                  key: KEYCLOAK_URL
-            - name: QUARKUS_REST_CLIENT_KEYCLOAK_TOKEN_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: ecommerce-config
-                  key: KEYCLOAK_URL
-            - name: QUARKUS_HTTP_PORT
-              value: "8082"
-          readinessProbe:
-            httpGet:
-              path: /q/health/ready
-              port: 8082
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            failureThreshold: 10
+            - { name: QUARKUS_DATASOURCE_JDBC_URL, value: "jdbc:postgresql://postgres:5432/auth_db" }
+            - { name: QUARKUS_DATASOURCE_USERNAME, valueFrom: { secretKeyRef: { name: ecommerce-db-secret, key: db-username } } }
+            - { name: QUARKUS_DATASOURCE_PASSWORD, valueFrom: { secretKeyRef: { name: ecommerce-db-secret, key: db-password } } }
+            - { name: QUARKUS_OIDC_AUTH_SERVER_URL, valueFrom: { configMapKeyRef: { name: ecommerce-config, key: KEYCLOAK_OIDC_URL } } }
+            - { name: QUARKUS_REST_CLIENT_KEYCLOAK_ADMIN_URL, valueFrom: { configMapKeyRef: { name: ecommerce-config, key: KEYCLOAK_URL } } }
+            - { name: QUARKUS_REST_CLIENT_KEYCLOAK_TOKEN_URL, valueFrom: { configMapKeyRef: { name: ecommerce-config, key: KEYCLOAK_URL } } }
+            - { name: QUARKUS_HTTP_PORT, value: "8082" }
           resources:
-            requests:
-              cpu: "200m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-      imagePullSecrets:
-        - name: ghcr-pull-secret
+            requests: { cpu: "150m", memory: "256Mi" }
+            limits:   { cpu: "500m", memory: "512Mi" }
 ---
 apiVersion: v1
 kind: Service
-metadata:
-  name: auth-service
-  namespace: ecommerce
-  labels:
-    app: auth-service
+metadata: { name: auth-service, namespace: ecommerce }
 spec:
-  selector:
-    app: auth-service
-  ports:
-    - port: 8082
-      targetPort: 8082
+  selector: { app: auth-service }
+  ports: [{ port: 8082, targetPort: 8082 }]

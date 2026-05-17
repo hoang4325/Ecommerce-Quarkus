@@ -1,4 +1,4 @@
-name: CI/CD Pipeline — Deploy to Railway
+name: CI Pipeline — E-Commerce Platform
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-# ─── Global env ───────────────────────────────────────────────────────────────
 env:
   JAVA_VERSION: '17'
   NODE_VERSION: '22'
@@ -16,22 +15,22 @@ jobs:
   # JOB 1: Build & Validate Backend (Quarkus)
   # ─────────────────────────────────────────────────────────────────────────────
   build-backend:
-    name: Build Backend — ${{ matrix.service.name }}
+    name: Build Backend — ${{ matrix.service }}
     runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
       matrix:
         service:
-          - name: api-gateway
-          - name: auth-service
-          - name: product-service
-          - name: cart-service
-          - name: order-service
-          - name: inventory-service
-          - name: payment-service
-          - name: notification-service
-          - name: user-service
+          - api-gateway
+          - auth-service
+          - product-service
+          - cart-service
+          - order-service
+          - inventory-service
+          - payment-service
+          - notification-service
+          - user-service
 
     steps:
       - name: Checkout code
@@ -44,10 +43,10 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Compile ${{ matrix.service.name }}
+      - name: Build ${{ matrix.service }}
         run: |
           mvn package \
-            -pl backend/${{ matrix.service.name }} -am \
+            -pl backend/${{ matrix.service }} -am \
             -DskipTests \
             --batch-mode --no-transfer-progress
 
@@ -88,101 +87,7 @@ jobs:
           VITE_API_BASE_URL: /api
 
   # ─────────────────────────────────────────────────────────────────────────────
-  # JOB 3: Deploy to Railway
+  # NOTE: Deployment is done locally via deploy-local.ps1
+  # To deploy, run on your machine:
+  #   .\deploy-local.ps1
   # ─────────────────────────────────────────────────────────────────────────────
-  deploy:
-    name: Deploy to Railway
-    runs-on: ubuntu-latest
-    needs: [ build-backend, build-frontend ]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    environment:
-      name: production
-      url: https://railway.app/project/${{ secrets.RAILWAY_PROJECT_ID }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # ── Install Railway CLI ───────────────────────────────────────────────────
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli@latest
-
-      # ── Validate RAILWAY_TOKEN secret ─────────────────────────────────────────
-      # HOW TO SET THIS SECRET:
-      # 1. Go to https://railway.app → New Project (create project)
-      # 2. Project Settings → Tokens → New Token
-      # 3. Copy the token
-      # 4. GitHub repo → Settings → Secrets and variables → Actions
-      # 5. New repository secret → Name: RAILWAY_TOKEN, Value: <token>
-      - name: Validate RAILWAY_TOKEN secret
-        run: |
-          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
-            echo ""
-            echo "╔══════════════════════════════════════════════════════════════╗"
-            echo "║  ❌  RAILWAY_TOKEN secret is NOT set in GitHub!              ║"
-            echo "╠══════════════════════════════════════════════════════════════╣"
-            echo "║  HOW TO FIX:                                                 ║"
-            echo "║  1. Go to https://railway.app → Your Project                 ║"
-            echo "║  2. Settings → Tokens → Create New Token                     ║"
-            echo "║  3. GitHub repo → Settings →                                 ║"
-            echo "║     Secrets and variables → Actions                          ║"
-            echo "║  4. Add secret: RAILWAY_TOKEN = <your token>                 ║"
-            echo "╚══════════════════════════════════════════════════════════════╝"
-            exit 1
-          fi
-          echo "✅ RAILWAY_TOKEN is set."
-
-      # ── Deploy Backend Microservices ──────────────────────────────────────────
-      # Each service must exist in your Railway project with the SAME name.
-      # Create them at: railway.app → Project → New Service → Empty Service
-      # Then set the service name to match exactly.
-      - name: Deploy backend services
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          declare -A SERVICES=(
-            ["auth-service"]="backend/auth-service/Dockerfile"
-            ["product-service"]="backend/product-service/Dockerfile"
-            ["cart-service"]="backend/cart-service/Dockerfile"
-            ["order-service"]="backend/order-service/Dockerfile"
-            ["inventory-service"]="backend/inventory-service/Dockerfile"
-            ["payment-service"]="backend/payment-service/Dockerfile"
-            ["notification-service"]="backend/notification-service/Dockerfile"
-            ["user-service"]="backend/user-service/Dockerfile"
-            ["api-gateway"]="backend/api-gateway/Dockerfile"
-          )
-
-          for service in "${!SERVICES[@]}"; do
-            dockerfile="${SERVICES[$service]}"
-            echo "🚀 Deploying $service (Dockerfile: $dockerfile)..."
-            railway up \
-              --service "$service" \
-              --dockerfile "$dockerfile" \
-              --detach
-            echo "✅ $service dispatched."
-          done
-
-      # ── Deploy Frontend ───────────────────────────────────────────────────────
-      - name: Deploy frontend
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          echo "🚀 Deploying frontend..."
-          railway up \
-            --service frontend \
-            --dockerfile frontend/Dockerfile \
-            --detach
-          echo "✅ Frontend dispatched."
-
-      # ── Deployment summary ────────────────────────────────────────────────────
-      - name: Deployment summary
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          echo ""
-          echo "╔══════════════════════════════════════════════════════════════╗"
-          echo "║  ✅  All services dispatched to Railway!                     ║"
-          echo "║  Monitor deployments at: https://railway.app                 ║"
-          echo "╚══════════════════════════════════════════════════════════════╝"
-          railway status || true

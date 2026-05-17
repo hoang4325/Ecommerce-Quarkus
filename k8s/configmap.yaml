@@ -1,30 +1,20 @@
-# =============================================================================
-# ConfigMap — Non-sensitive service configuration
-# =============================================================================
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: ecommerce-config
   namespace: ecommerce
 data:
-  # ── Database ────────────────────────────────────────────────────────────────
   POSTGRES_HOST: "postgres"
   POSTGRES_PORT: "5432"
-
-  # ── Keycloak ────────────────────────────────────────────────────────────────
   KEYCLOAK_URL: "http://keycloak:8080"
   KEYCLOAK_REALM: "ecommerce"
   KEYCLOAK_OIDC_URL: "http://keycloak:8080/realms/ecommerce"
-
-  # ── Kafka ───────────────────────────────────────────────────────────────────
   KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
-
-  # ── Service-to-service URLs (used by api-gateway) ──────────────────────────
-  AUTH_SERVICE_URL:         "http://auth-service:8082"
-  PRODUCT_SERVICE_URL:      "http://product-service:8083"
-  CART_SERVICE_URL:         "http://cart-service:8084"
-  ORDER_SERVICE_URL:        "http://order-service:8085"
-  INVENTORY_SERVICE_URL:    "http://inventory-service:8087"
-  PAYMENT_SERVICE_URL:      "http://payment-service:8088"
+  AUTH_SERVICE_URL: "http://auth-service:8082"
+  PRODUCT_SERVICE_URL: "http://product-service:8083"
+  CART_SERVICE_URL: "http://cart-service:8084"
+  ORDER_SERVICE_URL: "http://order-service:8085"
+  INVENTORY_SERVICE_URL: "http://inventory-service:8087"
+  PAYMENT_SERVICE_URL: "http://payment-service:8088"
   NOTIFICATION_SERVICE_URL: "http://notification-service:8089"
-  USER_SERVICE_URL:         "http://user-service:8090"
+  USER_SERVICE_URL: "http://user-service:8090"
