@@ -86,6 +86,10 @@ export interface ProductDTO {
   description: string;
   price: number;
   imageUrl: string;
+  color?: string;
+  productSize?: string;
+  dressStyle?: string;
+  images?: string[];
   categoryId: string;
   categoryName: string;
   active: boolean;
@@ -99,6 +103,9 @@ export interface CreateProductRequest {
   description?: string;
   price: number;
   imageUrl?: string;
+  color?: string;
+  productSize?: string;
+  dressStyle?: string;
   categoryId?: string;
 }
 
@@ -108,8 +115,39 @@ export interface UpdateProductRequest {
   description?: string;
   price?: number;
   imageUrl?: string;
+  color?: string;
+  productSize?: string;
+  dressStyle?: string;
   categoryId?: string;
   active?: boolean;
+}
+
+export interface ProductReviewDTO {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductRatingSummaryDTO {
+  productId: string;
+  averageRating: number;
+  reviewCount: number;
+  ratingCounts: Record<string, number>;
+}
+
+export interface CreateProductReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
+export interface UpdateProductReviewRequest {
+  rating?: number;
+  comment?: string;
 }
 
 // ─── Category ─────────────────────────────────────────────────────────────────
