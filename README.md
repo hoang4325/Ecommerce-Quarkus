@@ -20,7 +20,7 @@ Hệ thống thương mại điện tử phong cách thời trang được xây 
 
 ## 🏗️ Tổng quan hệ thống
 
-**VELORA** là nền tảng mua sắm thời trang trực tuyến, cung cấp đầy đủ luồng nghiệp vụ từ duyệt sản phẩm, quản lý giỏ hàng, đặt hàng đến thanh toán và thông báo. Hệ thống được thiết kế theo hướng **Cloud-Native**, có thể mở rộng độc lập từng service.
+**Shop.CO** là nền tảng mua sắm thời trang trực tuyến, cung cấp đầy đủ luồng nghiệp vụ từ duyệt sản phẩm, quản lý giỏ hàng, đặt hàng đến thanh toán và thông báo. Hệ thống được thiết kế theo hướng **Cloud-Native**, có thể mở rộng độc lập từng service.
 
 ### Tính năng chính
 
